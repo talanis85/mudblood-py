@@ -26,6 +26,7 @@ class Room(object):
         self.edges = {}
         self.x = 0
         self.y = 0
+        self.userdata = {}
 
     @classmethod
     def fromJsonObj(cls, ob):
@@ -111,9 +112,10 @@ class Map(object):
     def load_old(self, f):
         state = 0
         line = 0
+        r = None
         for l in f:
             line += 1
-            l = l.strip()
+            l = l.rstrip()
             if state == 0:
                 if l == "mudblood v1.0":
                     state = 1
@@ -147,8 +149,22 @@ class Map(object):
                         e = Edge(self.rooms[int(m.group(1))])
                         e.split = (m.group(5) == "1")
                         self.rooms[int(m.group(3))].edges[m.group(4)] = e
-            else:
-                pass
+            elif state == 4:
+                if l == "":
+                    state = 5
+                else:
+                    # TODO: virtual edges
+                    pass
+            elif state == 5:
+                r = self.rooms[int(l)]
+                r.userdata['script'] = ""
+                state = 6
+            elif state == 6:
+                if l == "###":
+                    state = 5
+                else:
+                    r.userdata['script'] += l + "\n"
+
 
     def save(self, f):
         j = {"rooms": []}
