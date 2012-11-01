@@ -79,10 +79,14 @@ class Session(object):
     def luaHook(self, hook, *args):
         ret = None
         try:
+            if hook == "room":
+                self.lua.contextSwitch("room")
             ret = self.lua.hook(hook, *args)
         except Exception as e:
+            self.lua.contextSwitch("global")
             self.lb.echo("-- ERROR in {}: {}".format(hook, str(e)))
             return None
+        self.lua.contextSwitch("global")
         return ret
 
     def luaEval(self, command):

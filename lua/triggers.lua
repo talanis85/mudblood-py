@@ -27,36 +27,6 @@ function string:split(sep)
     return ret
 end
 
-events.register("line", function (line)
-    l = line
-    if l == "" then
-        return " "
-    end
-
-    l = M.system:query(l)
-
-    if l == nil then l = line end
-    l = M.user:query(l)
-
-    return l
-end)
-
-events.register("input", function (line)
-    l = line
-
-    l = M.input.system:query(l)
-
-    if l == nil then l = line end
-    l = M.input.user:query(l)
-
-    return l
-end)
-
-events.register("heartbeat", function ()
-    M.system:query(os.time())
-    M.user:query(os.time())
-end)
-
 M.Trigger = {}
 M.Trigger.__index = M.Trigger
 
@@ -530,10 +500,6 @@ end
 -- @tparam TriggerList Trigger list to add the trigger to. Defaults to triggers.system.
 -- @return Dunno
 function M.yield(trigs, tlist)
-    if tlist == nil then
-        tlist = M.system
-    end
-
     if trigs.query ~= nil then
         trigs = { trigs }
     end
@@ -547,22 +513,6 @@ function M.yield(trigs, tlist)
     tlist:add(trig_list)
     return coroutine.yield()
 end
-
-
---- Pre-defined trigger lists.
--- @section trigger lists
-
-M.system = M.TriggerList.create()
-
---- Trigger list for incoming lines.
-M.user = M.TriggerList.create()
-
-M.input = {}
-M.input.system = M.TriggerList.create()
-
---- Trigger list for outgoing lines.
--- @table input.user
-M.input.user = M.TriggerList.create()
 
 
 return M

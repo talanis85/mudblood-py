@@ -41,6 +41,9 @@ class Lua(object):
         self.lua.execute("colors = require 'colors'")
         self.lua.execute("events = require 'events'")
         self.lua.execute("triggers = require 'triggers'")
+        self.lua.execute("context = require 'context'")
+
+        self.lua.execute("require 'aux'")
 
         g = self.lua.globals()
 
@@ -91,6 +94,9 @@ class Lua(object):
 
     def hook(self, hook, *args):
         return self.lua.globals().events.call(hook, *args)
+    
+    def contextSwitch(self, ctx):
+        self.lua.execute("context.switch('{}')".format(ctx))
 
     # Lua functions
 
