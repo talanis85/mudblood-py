@@ -186,7 +186,7 @@ class Lua_Map(LuaExposedObject):
 class Lua_Map_Room(LuaExposedObject):
     def __init__(self, lua, rid):
         super().__init__(lua)
-        self._roomId = rid
+        self._roomId = self._lua.session.map.findRoom(rid)
 
     def __str__(self):
         r = self._lua.session.map.rooms[self._roomId]

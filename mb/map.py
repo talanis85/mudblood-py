@@ -162,6 +162,16 @@ class Map(object):
         self.rooms[self._nextRid] = Room(self._nextRid)
         self._nextRid += 1
 
+    def findRoom(self, id):
+        if isinstance(id, str):
+            for r in self.rooms.values():
+                if r.tag == id:
+                    id = r.id
+        if isinstance(id, int):
+            return id
+        else:
+            raise KeyError("Room {} not found".format(id))
+
     def goto(self, id):
         self.currentRoom = id
 
