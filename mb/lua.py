@@ -54,12 +54,12 @@ class Lua(object):
         g.nmap = self.nmap
         g.dofile = self.dofile
         g.config = self.config
-        g.path = Lua_Path(self.session)
+        g.path = Lua_Path(self)
 
         g.astring = linebuffer.AString
 
-        g.telnet = Lua_Telnet(self.session)
-        g.map = Lua_Map(self.session)
+        g.telnet = Lua_Telnet(self)
+        g.map = Lua_Map(self)
 
     def exposeObject(self, ob):
         ret = {}
@@ -110,8 +110,8 @@ class Lua(object):
                 self.error("Encoding {} not supported".format(value))
 
 class LuaExposedObject(object):
-    def __init__(self, session):
-        self._session = session
+    def __init__(self, lua):
+        self._lua = lua
 
     def __str__(self):
         return "MudbloodObject"
@@ -121,7 +121,7 @@ class LuaExposedObject(object):
 
 class Lua_Path(LuaExposedObject):
     def profile(self):
-        return self._session.lua.profilePath
+        return self._lua.profilePath
 
 class Lua_Telnet(LuaExposedObject):
     # Constants
@@ -142,72 +142,79 @@ class Lua_Telnet(LuaExposedObject):
     EOR = 239
 
     def negWill(self, option):
-        if not self._session.telnet: raise Exception("Not connected")
-        self._session.telnet.sendIAC(WILL, option)
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        self._lua.session.telnet.sendIAC(WILL, option)
     def negWont(self, option):
-        if not self._session.telnet: raise Exception("Not connected")
-        self._session.telnet.sendIAC(WONT, option)
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        self._lua.session.telnet.sendIAC(WONT, option)
     def negDo(self, option):
-        if not self._session.telnet: raise Exception("Not connected")
-        self._session.telnet.sendIAC(DO, option)
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        self._lua.session.telnet.sendIAC(DO, option)
     def negDont(self, option):
-        if not self._session.telnet: raise Exception("Not connected")
-        self._session.telnet.sendIAC(DONT, option)
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        self._lua.session.telnet.sendIAC(DONT, option)
     def negSubneg(self, option, data):
-        if not self._session.telnet: raise Exception("Not connected")
-        self._session.telnet.sendSubneg(option, data)
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        self._lua.session.telnet.sendSubneg(option, data)
 
 class Lua_Map(LuaExposedObject):
     def room(self, id=None):
         if id is None:
-            return Lua_Map_Room(self._session, self._session.map.currentRoom)
+            return Lua_Map_Room(self._lua, self._lua.session.map.currentRoom)
         else:
-            return Lua_Map_Room(self._session, id)
+            return Lua_Map_Room(self._lua, id)
 
     def getVisible(self):
-        return self._session.mapWindow.visible
+        return self._lua.session.mapWindow.visible
     def setVisible(self, v):
-        self._session.mapWindow.visible = v
+        self._lua.session.mapWindow.visible = v
 
     visible = property(getVisible, setVisible)
 
     def load(self, filename):
         with open(filename, "r") as f:
-            self._session.map.load(f)
+            self._lua.session.map.load(f)
+
+    def load_old(self, filename):
+        with open(filename, "r") as f:
+            self._lua.session.map.load_old(f)
 
     def save(self, filename):
         with open(filename, "w") as f:
-            self._session.map.save(f)
+            self._lua.session.map.save(f)
 
 class Lua_Map_Room(LuaExposedObject):
-    def __init__(self, session, rid):
-        super().__init__(session)
+    def __init__(self, lua, rid):
+        super().__init__(lua)
         self._roomId = rid
 
     def __str__(self):
-        r = self._session.map.rooms[self._roomId]
+        r = self._lua.session.map.rooms[self._roomId]
         return "Room #{} ({})".format(r.id, (r.tag or "no tag"))
 
     def getEdges(self):
-        return dict([(e, Lua_Map_Edge(self._session, self._roomId, e))
-                     for e in self._session.map.rooms[self._roomId].edges])
+        return self._lua.lua.table(**(dict([(e, Lua_Map_Edge(self._lua, self._roomId, e))
+                     for e in self._lua.session.map.rooms[self._roomId].edges])))
 
     edges = property(getEdges)
 
+    def fly(self):
+        self._lua.session.map.goto(self._roomId)
+
 class Lua_Map_Edge(LuaExposedObject):
-    def __init__(self, session, rid, edge):
-        super().__init__(session)
+    def __init__(self, lua, rid, edge):
+        super().__init__(lua)
         self._roomId = rid
         self._edge = edge
 
     def __str__(self):
         return "Edge '{}' from Room #{} to Room #{}".format(self._edge,
                                                             self._roomId,
-                                                            self._session.map.rooms[self._roomId].edges[self._edge].dest.id)
+                                                            self._lua.session.map.rooms[self._roomId].edges[self._edge].dest.id)
 
     def getTo(self):
-        return Lua_Map_Room(self._session,
-                            self._session.map.rooms[self._roomId].edges[self._edge].dest.id)
+        return Lua_Map_Room(self._lua,
+                            self._lua.session.map.rooms[self._roomId].edges[self._edge].dest.id)
 
     def setTo(self, room):
         rid = 0
@@ -218,8 +225,8 @@ class Lua_Map_Edge(LuaExposedObject):
         else:
             raise Exception("Room object or Room ID required")
 
-        if rid in self._session.map.rooms:
-            self._session.map.rooms[self._roomId].edges[self._edge].dest = self._session.map.rooms[rid]
+        if rid in self._lua.session.map.rooms:
+            self._lua.session.map.rooms[self._roomId].edges[self._edge].dest = self._lua.session.map.rooms[rid]
         else:
             raise Exception("Destination room not found")
 
