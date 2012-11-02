@@ -6,6 +6,7 @@ local events = {
     input = {},
     line = {},
     connect = {},
+    disconnect = {},
     heartbeat = {},
     room = {},
     telneg = {}
