@@ -42,6 +42,7 @@ class Lua(object):
         self.lua.execute("events = require 'events'")
         self.lua.execute("triggers = require 'triggers'")
         self.lua.execute("context = require 'context'")
+        self.lua.execute("mapper = require 'mapper'")
 
         self.lua.execute("require 'aux'")
 
@@ -168,7 +169,7 @@ class Lua_Map(LuaExposedObject):
         if id is None:
             return Lua_Map_Room(self._lua, self._lua.session.map.currentRoom)
         else:
-            return Lua_Map_Room(self._lua, id)
+            return Lua_Map_Room(self._lua, self._lua.session.map.findRoom(id))
 
     def getVisible(self):
         return self._lua.session.mapWindow.visible
@@ -199,8 +200,8 @@ class Lua_Map_Room(LuaExposedObject):
         return "Room #{} ({})".format(r.id, (r.tag or "no tag"))
 
     def getEdges(self):
-        return self._lua.lua.table(**(dict([(e, Lua_Map_Edge(self._lua, self._roomId, e))
-                     for e in self._lua.session.map.rooms[self._roomId].edges])))
+        return self._lua.lua.table(**dict([(e, Lua_Map_Edge(self._lua, self._roomId, e))
+                     for e in self._lua.session.map.rooms[self._roomId].edges]))
 
     edges = property(getEdges)
 
@@ -211,6 +212,9 @@ class Lua_Map_Room(LuaExposedObject):
 
     def fly(self):
         self._lua.session.map.goto(self._roomId)
+
+    def getPath(self, to):
+        return self._lua.lua.table(*self._lua.session.map.shortestPath(self._roomId, to._roomId))
 
 class Lua_Map_Edge(LuaExposedObject):
     def __init__(self, lua, rid, edge):

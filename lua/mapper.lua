@@ -5,61 +5,58 @@ local M = {}
 
 require "coroutine"
 
---- Current braveness.
--- @see core.map.walk
-M.braveness = 9
+local walker = nil
+local walk_semaphore = 0
 
-local last_room = nil
+local function walk_cr(room)
+    local p = map.room().getPath(room)
 
-function string:split(sep)
-    ret = {}
-    for token in string.gmatch(self, "[^" .. sep .. "]+") do
-        table.insert(ret, token)
-    end
-    return ret
-end
-
---function M.opposite(o)
---    local sp = o:split(",")
---    if #sp == 2 then
---        map.room():edges()[sp[1]]:rename(sp[2])
---    end
---end
-
---- String to send before starting a walk.
-M.pre_walk = "ultrakurz\n"
-
---- String to send after finishing a walk.
-M.post_walk = "lang\nschau\n"
-
---- Walk to a room
--- Uses the current braveness setting to walk to the specified room.
--- @param room A room id (number) or a room tag (string).
-function M.walk(room)
-    map.room(room):walk(M.braveness, M.walker)
-end
-
-function M.walker(p)
-    last_room = map.room()
-
-    send(M.pre_walk)
     for i=1,#p do
         send(p[i] .. "\n")
-        if coroutine.yield() == true then
-            break
+        if walk_semaphore > 0 then
+            coroutine.yield()
+        end
+        if walk_semaphore == -1 then
+            walker = nil
+            return
         end
     end
-    send(M.post_walk)
 end
 
---function addportal(n, name)
---    pr = map.room("portal")
---
---    map.room():tag("portal." .. name)
---    pr:connect(map.room(), "t " .. n, "")
---    map.room():vconnect(pr)
---
---    print("Portal " .. n .. " (" .. name .. ") added.")
---end
+function M.walk(room)
+    walker = coroutine.create(walk_cr)
+    walk_semaphore = 0
+    coroutine.resume(walker, room)
+end
+
+function M.stop()
+    if walker == nil then
+        error("Not walking")
+    end
+
+    walk_semaphore = -1
+end
+
+function M.P()
+    if walker == nil then
+        error("Not walking")
+    end
+
+    walk_semaphore = walk_semaphore + 1
+end
+
+function M.V()
+    if walker == nil then
+        error("Not walking")
+    end
+
+    if walk_semaphore > 0 then
+        walk_semaphore = walk_semaphore - 1
+    end
+
+    if walk_semaphore == 0 then
+        coroutine.resume(walker)
+    end
+end
 
 return M

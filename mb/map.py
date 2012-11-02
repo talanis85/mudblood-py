@@ -59,6 +59,7 @@ class Room(object):
 class Edge(object):
     def __init__(self, dest):
         self.dest = dest
+        self.weight = 1
         self.split = False
 
     @classmethod
@@ -187,6 +188,25 @@ class Map(object):
             return id
         else:
             raise KeyError("Room {} not found".format(id))
+
+    def shortestPath(self, fr, to):
+        import heapq
+
+        visited = set()
+        queue = [(0, fr, ())]
+
+        while queue != []:
+            length, roomid, path = heapq.heappop(queue)
+            visited.add(roomid)
+
+            if roomid == to:
+                return path
+
+            for d,e in self.rooms[roomid].edges.items():
+                if e.dest.id not in visited:
+                    heapq.heappush(queue, (length + e.weight, e.dest.id, path + (d,)))
+
+        return None
 
     def goto(self, id):
         self.currentRoom = id
