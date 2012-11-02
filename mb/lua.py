@@ -51,7 +51,7 @@ class Lua(object):
         g.quit = self.session.quit
         g.mode = MB().screen.mode
         g.connect = self.session.connect
-        g.print = self.session.print
+        g.print = self.print
         g.status = self.session.status
         g.send = self.session.send
         g.directSend = self.session.directSend
@@ -77,6 +77,12 @@ class Lua(object):
         self.profilePath = os.path.abspath(os.path.dirname(filename))
         with open(filename, "r") as f:
             self.lua.execute(f.read())
+    
+    def toString(self, ob):
+        if isinstance(ob, lupa._lupa._LuaTable):
+            return "{" + ", ".join([str(e) for e in ob]) + "}"
+        else:
+            return str(ob)
 
     def error(self, msg):
         raise lupa.LuaError(msg)
@@ -100,6 +106,9 @@ class Lua(object):
         self.lua.execute("context.switch('{}')".format(ctx))
 
     # Lua functions
+
+    def print(self, ob):
+        self.session.lb.echo(self.toString(ob))
 
     def dofile(self, filename):
         with open(os.path.join(self.profilePath, filename), "r") as f:

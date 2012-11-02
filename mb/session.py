@@ -110,9 +110,6 @@ class Session(object):
     def quit(self):
         MB().drain.put(event.QuitEvent())
 
-    def print(self, string):
-        self.lb.echo(str(string))
-    
     def connect(self, host, port):
         self.log("Connecting to {}:{} ...".format(host, port), "info")
 
