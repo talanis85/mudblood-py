@@ -6,15 +6,24 @@ import re
 class InvalidMapFile(Exception):
     pass
 
+NORTH = 'n'
+NORTHEAST = 'ne'
+EAST = 'e'
+SOUTHEAST = 'se'
+SOUTH = 's'
+SOUTHWEST = 'sw'
+WEST = 'w'
+NORTHWEST = 'nw'
+
 directions = {
-        'n': ('s', 0, -1, 0),
-        'no': ('sw', 1, -1, 0),
-        'o': ('w', 1, 0, 0),
-        'so': ('nw', 1, 1, 0),
-        's': ('n', 0, 1, 0),
-        'sw': ('no', -1, 1, 0),
-        'w': ('o', -1, 0, 0),
-        'nw': ('so', -1, -1, 0),
+        NORTH:      (SOUTH, 0, -1, 0),
+        NORTHEAST:  (SOUTHWEST, 1, -1, 0),
+        EAST:       (WEST, 1, 0, 0),
+        SOUTHEAST:  (NORTHWEST, 1, 1, 0),
+        SOUTH:      (SOUTH, 0, 1, 0),
+        SOUTHWEST:  (NORTHEAST, -1, 1, 0),
+        WEST:       (EAST, -1, 0, 0),
+        NORTHWEST:  (SOUTHEAST, -1, -1, 0),
 #        'u': ('d', 0, 0, 1),
 #        'd': ('u', 0, 0, -1),
         }
@@ -48,7 +57,7 @@ class Room(object):
 
         return ob
 
-    def updateCoords(self, x, y, visited):
+    def updateCoords(self, map, x, y, visited):
         visited.add(self.id)
         self.x = x
         self.y = y
@@ -83,6 +92,16 @@ class Map(object):
     def __init__(self):
         self.rooms = {0: Room(0)}
         self.tags = {}
+        self.dirConfig = {
+                'n': NORTH,
+                'ne': NORTHEAST,
+                'e': EAST,
+                'se': SOUTHEAST,
+                's': SOUTH,
+                'sw': SOUTHWEST,
+                'w': WEST,
+                'nw': NORTHWEST
+                }
 
         self.currentRoom = 0
 
@@ -221,9 +240,9 @@ class MapRenderer(object):
 class AsciiMapRenderer(MapRenderer):
     directionSymbols = {
             'n': '|',
-            'no': '/',
-            'o': '-',
-            'so': '\\',
+            'ne': '/',
+            'e': '-',
+            'se': '\\',
             's': '|',
             'sw': '/',
             'w': '-',
@@ -251,22 +270,23 @@ class AsciiMapRenderer(MapRenderer):
                 self.out[y*w+x] = ord('#')
 
         for d,e in r.edges.items():
-            if d in directions:
+            if d in self.map.dirConfig:
+                d2 = self.map.dirConfig[d]
                 newx = x
                 newy = y
                 if e.split:
-                    newx += directions[d][1]
-                    newy += directions[d][2]
+                    newx += directions[d2][1]
+                    newy += directions[d2][2]
                     if newx >= 0 and newx < w and newy >= 0 and newy < h:
-                        self.out[newy*w+newx] = ord(self.directionSymbols[d])
+                        self.out[newy*w+newx] = ord(self.directionSymbols[d2])
                 else:
                     for i in range(2):
-                        newx += directions[d][1]
-                        newy += directions[d][2]
+                        newx += directions[d2][1]
+                        newy += directions[d2][2]
                         if newx >= 0 and newx < w and newy >= 0 and newy < h:
-                            self.out[newy*w+newx] = ord(self.directionSymbols[d])
-                    newx += directions[d][1]
-                    newy += directions[d][2]
+                            self.out[newy*w+newx] = ord(self.directionSymbols[d2])
+                    newx += directions[d2][1]
+                    newy += directions[d2][2]
 
                     self.renderRoom(e.dest, newx, newy, w, h)
 

@@ -33,7 +33,7 @@ class Session(object):
             try:
                 self.lua.loadFile(script + "/profile.lua")
             except Exception as e:
-                self.lb.echo("-- LUA ERROR: {}".format(str(e)))
+                self.lb.echo("-- LUA ERROR: {}\n{}".format(str(e), traceback.format_exc()))
 
         self.lb.echo("-- Session started.")
 

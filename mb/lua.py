@@ -3,6 +3,7 @@ import lupa
 import linebuffer
 import codecs
 import event
+import map
 
 from mudblood import MB
 
@@ -174,6 +175,15 @@ class Lua_Telnet(LuaExposedObject):
         self._lua.session.telnet.sendSubneg(option, data)
 
 class Lua_Map(LuaExposedObject):
+    NORTH       = map.NORTH
+    NORTHEAST   = map.NORTHEAST
+    EAST        = map.EAST
+    SOUTHEAST   = map.SOUTHEAST
+    SOUTH       = map.SOUTH
+    SOUTHWEST   = map.SOUTHWEST
+    WEST        = map.WEST
+    NORTHWEST   = map.NORTHWEST
+
     def room(self, id=None):
         if id is None:
             return Lua_Map_Room(self._lua, self._lua.session.map.currentRoom)
@@ -186,6 +196,13 @@ class Lua_Map(LuaExposedObject):
         self._lua.session.mapWindow.visible = v
 
     visible = property(getVisible, setVisible)
+
+    def getDirections(self):
+        return self._lua.lua.table(**self._lua.session.map.dirConfig)
+    def setDirections(self, v):
+        self._lua.session.map.dirConfig = dict(v)
+
+    directions = property(getDirections, setDirections)
 
     def load(self, filename):
         with open(filename, "r") as f:
