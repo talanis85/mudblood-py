@@ -61,7 +61,8 @@ class Session(object):
                 if ret is not None:
                     l = ret
                 if l:
-                    self.lb.echoInto(colors.AString(l).fg(colors.YELLOW))
+                    if ev.display:
+                        self.lb.echoInto(colors.AString(l).fg(colors.YELLOW))
                     if self.telnet:
                         self.telnet.write((l + "\n").encode(self.encoding))
         elif isinstance(ev, telnet.TelnetEvent):
@@ -133,7 +134,7 @@ class Session(object):
         return self.status
 
     def send(self, data):
-        MB().drain.put(event.InputEvent(data))
+        MB().drain.put(event.InputEvent(data, False))
 
     def directSend(self, data):
         self.telnet.write(data.encode(self.encoding))

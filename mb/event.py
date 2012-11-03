@@ -64,9 +64,10 @@ class ResizeEvent(Event):
         self.h = h
 
 class InputEvent(Event):
-    def __init__(self, text):
+    def __init__(self, text, display=True):
         super().__init__()
         self.text = text
+        self.display = display
 
 class ModeEvent(Event):
     def __init__(self, mode):
