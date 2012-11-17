@@ -95,7 +95,7 @@ class Session(event.Source):
         elif isinstance(ev, event.InputEvent):
             for l in reversed(ev.text.split("\n")):
                 if ev.display:
-                    self.print(self.getLastLine() + colors.AString(l).fg(colors.YELLOW))
+                    self.print(self.getPromptLine() + colors.AString(l).fg(colors.YELLOW))
                     self.lastLine = ""
 
                 ret = None
@@ -124,7 +124,10 @@ class Session(event.Source):
     def getLastLine(self):
         return ansi.Ansi().parseToAString(self.lastLine)
     def getPromptLine(self):
-        return ansi.Ansi().parseToAString(self.promptLine)
+        if self.promptLine == "":
+            return self.getLastLine()
+        else:
+            return ansi.Ansi().parseToAString(self.promptLine)
 
     def getStatusLine(self):
         return (self.lua.eval("mapper.walking()") and "WALKING" or "NOT WALKING")
