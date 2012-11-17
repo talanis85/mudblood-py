@@ -183,6 +183,10 @@ class AsyncSource(Source):
         self.running = True
         self.thread.start()
 
+    def stop(self):
+        self.running = False
+        self.thread.join()
+
     def run(self):
         while self.running:
             ev = self.poll()
