@@ -120,7 +120,7 @@ class Map(object):
         j = json.load(f)
 
         self.rooms = {}
-        self.tage = {}
+        self.tags = {}
         self._nextRid = 0
         self.currentRoom = 0
 
@@ -139,6 +139,11 @@ class Map(object):
                 self.rooms[r].edges[e].dest = self.rooms[self.rooms[r].edges[e].dest]
 
     def load_old(self, f):
+        self.rooms = {}
+        self.tags = {}
+        self._nextRid = 0
+        self.currentRoom = 0
+
         state = 0
         line = 0
         r = None
