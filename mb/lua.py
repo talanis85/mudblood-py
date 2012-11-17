@@ -371,7 +371,8 @@ class Lua_Map_Room(LuaExposedObject):
     edges = property(getEdges)
 
     def getUserdata(self):
-        return self._lua.lua.table(**self._lua.session.map.rooms[self._roomId].userdata)
+        #return self._lua.lua.table(**self._lua.session.map.rooms[self._roomId].userdata)
+        return self._lua.session.map.rooms[self._roomId].userdata
 
     userdata = property(getUserdata)
 
