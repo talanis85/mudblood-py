@@ -13,6 +13,8 @@ local function walk_cr(room, weightFunction)
     local p = map.room().getPath(room, weightFunction)
     local cr = coroutine.running()
 
+    if M.pre_walk then M.pre_walk() end
+
     for i=1,#p do
         local dir = p[i]
         send(dir .. "\n", {continuation=cr, display=false})
@@ -23,11 +25,16 @@ local function walk_cr(room, weightFunction)
         if walk_stop == true then
             walker = nil
             walk_stop = false
+            if M.post_walk then M.post_walk() end
             return
         end
     end
     walker = nil
+    if M.post_walk then M.post_walk() end
 end
+
+M.pre_walk = nil
+M.post_walk = nil
 
 function M.walk(room, weightFunction)
     walker = coroutine.create(walk_cr)
