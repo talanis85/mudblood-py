@@ -120,7 +120,7 @@ class Lua(object):
 
         crRet = g.ctxRoom.sendTriggers.query.coroutine(g.ctxRoom.sendTriggers, line).send(None)
         if crRet is None:
-            return None
+            return False
 
         ret, _, _ = crRet
         if ret is not None:
@@ -131,7 +131,7 @@ class Lua(object):
 
         crRet = g.ctxGlobal.sendTriggers.query.coroutine(g.ctxGlobal.sendTriggers, line).send(None)
         if crRet is None:
-            return None
+            return False
 
         ret, _, _ = crRet
         if ret is not None:
@@ -148,7 +148,7 @@ class Lua(object):
 
         crRet = g.ctxRoom.recvTriggers.query.coroutine(g.ctxRoom.recvTriggers, line).send(None)
         if crRet is None:
-            return None
+            return False
 
         ret, _, _ = crRet
         if ret is not None:
@@ -157,7 +157,7 @@ class Lua(object):
 
         crRet = g.ctxGlobal.recvTriggers.query.coroutine(g.ctxGlobal.recvTriggers, line).send(None)
         if crRet is None:
-            return None
+            return False
 
         ret, _, _ = crRet
         if ret is not None:
