@@ -251,25 +251,6 @@ class LuaExposedObject(object):
     def __repr__(self):
         return self.__str__()
 
-class LuaDictProxy(object):
-    def __init__(self, d):
-        self.d = d
-
-    def __str__(self):
-        return str(self.d)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __getitem__(self, key):
-        if key in self.d:
-            return self.d[key]
-        else:
-            return None
-
-    def __setitem__(self, key, value):
-        self.d[key] = value
-
 class Lua_Path(LuaExposedObject):
     def profile(self):
         return self._lua.profilePath
@@ -389,11 +370,10 @@ class Lua_Map_Room(LuaExposedObject):
 
     edges = property(getEdges)
 
-    def getUserdata(self):
-        #return self._lua.lua.table(**self._lua.session.map.rooms[self._roomId].userdata)
-        return LuaDictProxy(self._lua.session.map.rooms[self._roomId].userdata)
-
-    userdata = property(getUserdata)
+    def getUserdata(self, key):
+        return self._lua.session.map.rooms[self._roomId].userdata.get(key)
+    def setUserdata(self, key, value):
+        self._lua.session.map.rooms[self._roomId].userdata[key] = value
 
     def fly(self):
         self._lua.session.map.goto(self._roomId)
@@ -446,7 +426,7 @@ class Lua_Map_Edge(LuaExposedObject):
 
     weight = property(getWeight, setWeight)
 
-    def getUserdata(self):
-        return self._lua.lua.table(**self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].userdata)
-
-    userdata = property(getUserdata)
+    def getUserdata(self, key):
+        return self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].userdata.get(key)
+    def setUserdata(self, key, value):
+        self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].userdata[key] = value
