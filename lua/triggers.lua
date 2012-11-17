@@ -112,6 +112,7 @@ function M.TriggerList.create(one_shot)
 
     setmetatable(tlist, M.TriggerList)
     tlist.list = {}
+    tlist.one_shot = one_shot
 
     return tlist
 end
@@ -136,7 +137,7 @@ function M.TriggerList:add(trigger, name, priority)
             error("A trigger with name '" .. name .. "' already exists in this list.")
         end
         if priority <= v.priority then
-            table_pos = i
+            table_pos = i+1
             break
         end
     end
@@ -163,7 +164,7 @@ function M.TriggerList:remove(index)
     if type(index) == "string" then
         error("Trigger '" .. index .. "' not found in list.")
     end
-    table.remove(self, index)
+    table.remove(self.list, index)
 end
 
 --- Remove all sub-triggers.
@@ -183,9 +184,6 @@ end
 -- @treturn string The modified line or nil.
 function M.TriggerList:query(l)
     local changed = false
-    if l == nil then
-        return nil, false, false
-    end
     local grem = nil
     local gfire = false
     local to_remove = {}
@@ -198,10 +196,6 @@ function M.TriggerList:query(l)
         local rem = false
         local fire = false
         ret, fire, rem = copy[i]:query(l)
-        if ret ~= nil then
-            l = ret
-            changed = true
-        end
         if fire then
             gfire = true
         end
@@ -214,13 +208,20 @@ function M.TriggerList:query(l)
             end
             grem = true
         end
+        if ret ~= nil then
+            l = ret
+            changed = true
+            if l == false then
+                break
+            end
+        end
     end
 
     if changed == false then
         l = nil
     end
 
-    if one_shot == true and grem == true then
+    if self.one_shot == true and grem == true then
         return l, gfire, true
     else
         return l, gfire, false
@@ -322,12 +323,23 @@ function M.gsub(pattern, fun)
                 local r2 = false 
                 local r3 = false
                 for _,v in ipairs(pattern) do
-                    string.gsub(l, v, function (...)
+                    local findret = {string.find(l, v)}
+                    if findret[1] ~= nil then
                         if fun then
-                            r1, r3 = fun(unpack(arg))
+                            local args = {}
+                            for i=3,#findret do
+                                table.insert(args, findret[i])
+                            end
+                            r1, r3 = fun(unpack(args))
                         end
                         r2 = true
-                    end)
+                    end
+                    --string.gsub(l, v, function (...)
+                    --    if fun then
+                    --        r1, r3 = fun(unpack(arg))
+                    --    end
+                    --    r2 = true
+                    --end)
                     if r2 then
                         break
                     end
@@ -345,9 +357,11 @@ function M.gsub(pattern, fun)
                 local r1 = nil
                 local r2 = false
                 local r3 = false
-                local _, n = string.gsub(l, pattern[curl], function (...)
-                    for _,v in ipairs(arg) do
-                        table.insert(ret, v)
+
+                local findret = {string.find(l, pattern[curl])}
+                if findret[1] ~= nil then
+                    for i=3,#findret do
+                        table.insert(ret, findret[i])
                     end
                     if curl == #pattern then
                         curl = 1
@@ -359,7 +373,22 @@ function M.gsub(pattern, fun)
                     else
                         curl = curl + 1
                     end
-                end)
+                end
+                --local _, n = string.gsub(l, pattern[curl], function (...)
+                --    for _,v in ipairs(arg) do
+                --        table.insert(ret, v)
+                --    end
+                --    if curl == #pattern then
+                --        curl = 1
+                --        if fun then
+                --            r1, r3 = fun(unpack(ret))
+                --        end
+                --        ret = {}
+                --        r2 = true
+                --    else
+                --        curl = curl + 1
+                --    end
+                --end)
                 if n == 0 then
                     curl = 1
                     ret = {}
@@ -367,6 +396,20 @@ function M.gsub(pattern, fun)
                 return r1, r2, r3
             end)
     end
+end
+
+--- A trigger that fires on any input
+-- @tparam string desc The trigger's description
+-- @treturn Trigger
+function M.any(desc)
+    return M.Trigger.create(
+        desc,
+        function (self, l)
+            if type(l) ~= "string" then return nil, false, false end
+
+            return nil, true, false
+        end
+    )
 end
 
 --- Call a function on every line.
@@ -406,10 +449,8 @@ end
 -- @treturn Trigger
 function M.timer(desc, length, f)
     local endtime = os.time() + length
-    return M.Trigger.create(desc, function (self, t)
-            if type(t) ~= "number" then return nil, false, false end
-
-            if t == endtime then
+    return M.Trigger.create(desc, function (self)
+            if os.time() >= endtime then
                 if f then f() end
                 return nil, true, true
             end
@@ -425,10 +466,8 @@ end
 -- @see triggers.timer
 function M.repeat_timer(desc, length, f)
     local endtime = os.time() + length
-    return M.Trigger.create(desc, function (self, t)
-            if type(t) ~= "number" then return nil, false, false end
-
-            if t > endtime then
+    return M.Trigger.create(desc, function (self)
+            if os.time() > endtime then
                 if f() == true then
                     return nil, true, true
                 else

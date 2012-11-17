@@ -1,2 +1,0 @@
-class Warning(Exception):
-    pass

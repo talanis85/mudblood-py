@@ -31,6 +31,7 @@ class FSM(object):
         else:
             return True
 
+# TODO: React to [CSI (0) c] with [CSI 60;22;c]
 class Ansi(FSM):
     def __init__(self):
         super().__init__()

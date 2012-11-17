@@ -1,19 +1,20 @@
 import keys
 
 class ModeManager(object):
-    def __init__(self, initMode):
-        self._mode = initMode
+    def __init__(self, initMode, modes):
+        self._modes = modes
+        self._currentMode = initMode
 
-    def setMode(self, mode):
-        self._mode.onExit()
-        self._mode = mode
-        self._mode.onEnter()
+    def setMode(self, modename, **kwargs):
+        self._modes[self._currentMode].onExit()
+        self._currentMode = modename
+        self._modes[self._currentMode].onEnter(**kwargs)
 
     def getMode(self):
-        return self._mode
+        return self._currentMode
 
     def key(self, key):
-        self._mode.onKey(key)
+        self._modes[self._currentMode].onKey(key)
 
 class Mode(object):
     def onEnter(self):

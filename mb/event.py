@@ -1,5 +1,5 @@
 import threading
-import queue
+from collections import deque
 
 import sys
 import termios
@@ -14,31 +14,71 @@ class Drain(object):
     A Drain aggregates data from multiple sources.
     """
     def __init__(self):
-        self.eventQueue = queue.Queue()
+        self.eventQueue = deque()
+        self.condition = threading.Condition()
 
-    def get(self, timeout=0):
+    def get(self, block=True, timeout=None):
         """
         Pop a single event from the drain. Blocks if no events are
         pending.
         """
+        ev = None
+
+        self.condition.acquire()
         try:
-            return self.eventQueue.get(True, timeout)
-        except queue.Empty as e:
-            return None
+            ev = self.eventQueue.pop()
+            self.condition.release()
+            return ev
+        except IndexError:
+            if not block:
+                self.condition.release()
+                return None
+            while True:
+                self.condition.wait(timeout)
+                try:
+                    ev = self.eventQueue.pop()
+                    self.condition.release()
+                    return ev
+                except IndexError:
+                    if timeout is not None:
+                        self.condition.release()
+                        return None
 
     def put(self, event):
         """
         Inject something into the drain.
         """
-        self.eventQueue.put(event)
+        self.condition.acquire()
+
+        self.eventQueue.appendleft(event)
+
+        self.condition.notify()
+        self.condition.release()
+
+    def push(self, event):
+        """
+        Push an event (i.e. append on the right side of the queue)
+        """
+        self.condition.acquire()
+
+        self.eventQueue.append(event)
+
+        self.condition.notify()
+        self.condition.release()
 
 # EVENT TYPES
 
 class Event(object):
     def __init__(self):
+        # The source of the event
         self.source = None
+        # A function that is called after the event was processed
+        self.continuation = None
 
 class DisconnectEvent(Event):
+    pass
+
+class QuitEvent(Event):
     pass
 
 class LogEvent(Event):
@@ -47,10 +87,7 @@ class LogEvent(Event):
         self.msg = msg
         self.level = level
 
-class RawEvent(Event):
-    def __init__(self, data):
-        super().__init__()
-        self.data = data
+# Window Events
 
 class KeyEvent(Event):
     def __init__(self, key):
@@ -63,24 +100,53 @@ class ResizeEvent(Event):
         self.w = w
         self.h = h
 
-class InputEvent(Event):
-    def __init__(self, text, display=True):
-        super().__init__()
-        self.text = text
-        self.display = display
-
 class ModeEvent(Event):
-    def __init__(self, mode):
+    def __init__(self, mode, **kwargs):
         super().__init__()
         self.mode = mode
+        self.args = kwargs
 
-class FunctionEvent(Event):
-    def __init__(self, func):
+# Output Chain
+
+class RawEvent(Event):
+    def __init__(self, data):
         super().__init__()
-        self.func = func
+        self.data = data
 
-class QuitEvent(Event):
-    pass
+class StringEvent(Event):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+
+class EchoEvent(Event):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+
+
+# Input Chain
+
+class InputEvent(Event):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+        self.display = True
+
+class DirectInputEvent(Event):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+
+class SendEvent(Event):
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+
+class CallableEvent(Event):
+    def __init__(self, call, *args):
+        super().__init__()
+        self.call = call
+        self.args = args
 
 # SOURCE TYPES
 
@@ -101,6 +167,11 @@ class Source(object):
         event.source = self
         if self.drain:
             self.drain.put(event)
+
+    def push(self, event):
+        event.source = self
+        if self.drain:
+            self.drain.push(event)
 
 class AsyncSource(Source):
     def __init__(self):

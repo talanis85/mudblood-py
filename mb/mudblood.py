@@ -4,11 +4,12 @@ def MB():
 import sys
 import os
 
+import time
+
 import event
 import session
 import linebuffer
 import window
-import errors
 
 class Singleton(type):
     def __init__(cls, name, bases, dict):
@@ -33,8 +34,9 @@ class Mudblood(metaclass=Singleton):
         if self.screenType == "termbox":
             import screen.termbox
             self.screen = screen.termbox.TermboxScreen()
-        else:
-            self.screen = None
+        elif self.screenType == "debug":
+            import screen.debug
+            self.screen = screen.debug.DebugScreen()
 
         self.screen.source.bind(self.drain)
 
@@ -54,35 +56,58 @@ class Mudblood(metaclass=Singleton):
                 raise Exception("Could not create configuration directory.")
 
         self.session = session.Session(config['script'])
+        self.session.bind(self.drain)
 
         self.screen.update()
 
-        while True:
-            ev = self.drain.get(1)
+        doQuit = False
+        while not doQuit:
+            # Process all pending events, then update screen
 
+            ev = self.drain.get(True, 1)
             if ev:
-                if not (isinstance(ev, event.RawEvent) or isinstance(ev, event.KeyEvent)):
-                    self.log(str(ev), "debug3")
-
-                if isinstance(ev, event.LogEvent):
-                    self.log(ev.msg, ev.level)
-                elif isinstance(ev, event.KeyEvent):
-                    self.screen.keyEvent(ev.key)
-                elif isinstance(ev, event.ResizeEvent):
-                    self.screen.updateSize()
-                elif isinstance(ev, event.ModeEvent):
-                    self.screen.modeManager.setMode(ev.mode)
-                elif isinstance(ev, event.QuitEvent):
-                    break
+                if isinstance(ev, event.QuitEvent):
+                    doQuit = True
                 else:
-                    self.session.event(ev)
+                    self.event(ev)
+            while True:
+                ev = self.drain.get(False)
+                if ev is None:
+                    break
+                if isinstance(ev, event.QuitEvent):
+                    doQuit = True
+                else:
+                    self.event(ev)
 
+            self.session.lua.triggerTime()
             self.screen.update()
 
             # TODO: multiple sessions
-            self.session.luaHook("heartbeat")
-
+            
         self.screen.destroy()
+
+    def event(self, ev):
+        if isinstance(ev, event.LogEvent):
+            self.log(ev.msg, ev.level)
+        elif isinstance(ev, event.KeyEvent):
+            self.screen.keyEvent(ev.key)
+        elif isinstance(ev, event.ResizeEvent):
+            self.log("Window Resize ({}x{})".format(ev.w, ev.h), "debug")
+            #self.screen.updateSize()
+            self.screen.updateSize(ev.w, ev.h)
+            #self.screen.updateSize(10, 10)
+        elif isinstance(ev, event.ModeEvent):
+            self.log("Changed mode to {} ({})".format(ev.mode, ev.args), "debug")
+            self.screen.modeManager.setMode(ev.mode, **ev.args)
+        elif isinstance(ev, event.CallableEvent):
+            try:
+                ev.call(*ev.args)
+            except Exception as e:
+                self.log(str(e), "err")
+        else:
+            #t = time.clock()
+            self.session.event(ev)
+            #self.log("{} took time {}".format(str(ev), time.clock() - t))
 
     def log(self, msg, level="debug"):
         if level == "debug3":

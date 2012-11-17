@@ -28,9 +28,13 @@ function M.current()
     end
 end
 
+function M.currentName()
+    return context
+end
+
 function M.get(ctx)
     if ctx == nil then
-        ctx = context
+        return c_global
     end
 
     if ctx == "global" then
@@ -40,27 +44,104 @@ function M.get(ctx)
     end
 end
 
+function M.reset(ctx)
+    if ctx == nil then
+        c_global = makecontext()
+    elseif ctx == "global" then
+        c_global = makecontext()
+    elseif ctx == "room" then
+        c_room = makecontext()
+    end
+end
+
 events.register("line", function (line)
-    l = line
+    local l = line
     if l == "" then
         return " "
     end
 
-    l = M.get().out_triggers:query(l)
+    local cr = coroutine.create(function ()
+        local gret = nil
+        local ret
+        local line = l
+
+        ret = c_room.in_triggers:query(line)
+        if ret ~= nil then
+            line = ret
+            gret = ret
+        end
+
+        ret = c_global.in_triggers:query(line)
+        if ret ~= nil then
+            line = ret
+            gret = ret
+        end
+
+        return gret
+    end)
+
+    local e
+    e, l = coroutine.resume(cr)
+    if e ~= true then
+        print(debug.traceback(cr, l))
+        error(l)
+    end
+    if coroutine.status(cr) ~= "dead" then
+        print('suspended')
+        return ""
+    end
+
+    --l = M.get().out_triggers:query(l)
 
     return l
 end)
 
 events.register("input", function (line)
-    l = line
+    local l = line
 
-    l = M.get().in_triggers:query(l)
+    local cr = coroutine.create(function ()
+        local gret = nil
+        local ret
+        local line = l
+
+        ret = c_room.in_triggers:query(line)
+        if ret ~= nil then
+            line = ret
+            gret = ret
+        end
+
+        ret = c_global.in_triggers:query(line)
+        if ret ~= nil then
+            line = ret
+            gret = ret
+        end
+
+        return gret
+    end)
+
+    local e
+    e, l = coroutine.resume(cr)
+    if e ~= true then
+        print(debug.traceback(cr, l))
+        error(l)
+    end
+    if coroutine.status(cr) ~= "dead" then
+        print('suspended')
+        return ""
+    end
+    --l = M.get().in_triggers:query(l)
 
     return l
 end)
 
 events.register("heartbeat", function ()
-    M.get().timers:query(os.time())
+    local l
+    local cr = coroutine.create(function () return M.get().timers:query(os.time()) end)
+    local e
+    e, l = coroutine.resume(cr)
+    if e ~= true then
+        error(l)
+    end
 end)
 
 

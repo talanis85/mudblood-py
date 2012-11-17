@@ -17,6 +17,7 @@ OPT_EOR = 25
 
 class TelnetEvent(event.Event):
     def __init__(self, cmd, option, data=None):
+        super().__init__()
         self.cmd = cmd
         self.option = option
         self.data = data
@@ -81,8 +82,9 @@ class Telnet(event.AsyncSource):
                     state = 1
                 elif c == ord("\r"):
                     pass
-                else:
+                elif c == 0x1b or c == ord("\n") or (c >= ord(" ") and c <= ord("~")):
                     parsed.append(c)
+
             return event.RawEvent(bytes(parsed))
 
     def write(self, buf):

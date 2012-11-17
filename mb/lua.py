@@ -33,38 +33,48 @@ from mudblood import MB
 
 class Lua(object):
     def __init__(self, session, packagePath):
-        self.lua = lupa.LuaRuntime()
+        self.packagePath = packagePath
         self.session = session
         self.profilePath = "."
+        self.filename = None
 
-        self.lua.execute("package.path = '{}'".format(packagePath))
+        self.luaInit()
+
+    def luaInit(self):
+        self.lua = lupa.LuaRuntime()
+
+        self.lua.execute("package.path = '{}'".format(self.packagePath))
 
         self.lua.execute("colors = require 'colors'")
         self.lua.execute("events = require 'events'")
         self.lua.execute("triggers = require 'triggers'")
-        self.lua.execute("context = require 'context'")
         self.lua.execute("mapper = require 'mapper'")
 
         self.lua.execute("require 'aux'")
 
         g = self.lua.globals()
 
+        g.ctxGlobal = Lua_Context(self)
+        g.ctxRoom = Lua_Context(self)
+
+        g.reload = self.reload
         g.quit = self.session.quit
-        g.mode = MB().screen.mode
-        g.connect = self.session.connect
+        g.mode = self.mode
+        g.connect = self.connect
         g.print = self.print
         g.status = self.session.status
-        g.send = self.session.send
-        g.directSend = self.session.directSend
+        g.send = self.send
+        g.directSend = self.directSend
         g.nmap = self.nmap
-        g.dofile = self.dofile
+        g.prompt = self.prompt
+        g.load = self.load
         g.config = self.config
         g.path = Lua_Path(self)
 
-        g.astring = linebuffer.AString
-
         g.telnet = Lua_Telnet(self)
         g.map = Lua_Map(self)
+
+        g.markPrompt = self.markPrompt
 
     def exposeObject(self, ob):
         ret = {}
@@ -76,6 +86,7 @@ class Lua(object):
 
     def loadFile(self, filename):
         self.profilePath = os.path.abspath(os.path.dirname(filename))
+        self.filename = filename
         with open(filename, "r") as f:
             self.lua.execute(f.read())
     
@@ -102,18 +113,114 @@ class Lua(object):
 
     def hook(self, hook, *args):
         return self.lua.globals().events.call(hook, *args)
+
+    def triggerSend(self, line):
+        g = self.lua.globals()
+        gret = None
+
+        crRet = g.ctxRoom.sendTriggers.query.coroutine(g.ctxRoom.sendTriggers, line).send(None)
+        if crRet is None:
+            return None
+
+        ret, _, _ = crRet
+        if ret is not None:
+            line = ret
+            gret = ret
+            if ret == False:
+                return False
+
+        crRet = g.ctxGlobal.sendTriggers.query.coroutine(g.ctxGlobal.sendTriggers, line).send(None)
+        if crRet is None:
+            return None
+
+        ret, _, _ = crRet
+        if ret is not None:
+            line = ret
+            gret = ret
+            if ret == False:
+                return False
+
+        return gret
     
-    def contextSwitch(self, ctx):
-        self.lua.execute("context.switch('{}')".format(ctx))
+    def triggerRecv(self, line):
+        g = self.lua.globals()
+        gret = None
+
+        crRet = g.ctxRoom.recvTriggers.query.coroutine(g.ctxRoom.recvTriggers, line).send(None)
+        if crRet is None:
+            return None
+
+        ret, _, _ = crRet
+        if ret is not None:
+            line = ret
+            gret = ret
+
+        crRet = g.ctxGlobal.recvTriggers.query.coroutine(g.ctxGlobal.recvTriggers, line).send(None)
+        if crRet is None:
+            return None
+
+        ret, _, _ = crRet
+        if ret is not None:
+            line = ret
+            gret = ret
+
+        return gret
+
+    def triggerTime(self):
+        g = self.lua.globals()
+
+        cr = g.ctxRoom.timers.query.coroutine(g.ctxRoom.timers)
+        cr.send(None)
+
+        cr = g.ctxGlobal.timers.query.coroutine(g.ctxGlobal.timers)
+        cr.send(None)
 
     # Lua functions
 
-    def print(self, ob):
-        self.session.lb.echo(self.toString(ob))
+    def reload(self):
+        if self.filename is None:
+            self.error("No file loaded")
+        else:
+            self.luaInit()
+            self.loadFile(self.filename)
+    
+    def connect(self, host, port):
+        self.session.connect(host, port)
 
-    def dofile(self, filename):
+    def mode(self, m):
+        self.session.put(event.ModeEvent(m))
+
+    def send(self, data, args={}):
+        def cont():
+            try:
+                args['continuation'].send(None)
+            except StopIteration:
+                pass
+            except Exception as e:
+                self.session.log("Lua error in event continuation: {}\n{}".format(str(e), traceback.format_exc()), "err")
+
+        ev = event.InputEvent(data)
+
+        if "continuation" in args:
+            ev.continuation = cont
+        if "display" in args:
+            ev.display = args['display']
+
+        self.session.put(ev)
+
+    def directSend(self, data):
+        self.session.put(event.DirectInputEvent(data))
+
+    def print(self, ob):
+        self.session.put(event.EchoEvent(self.toString(ob)))
+
+    def load(self, filename):
         with open(os.path.join(self.profilePath, filename), "r") as f:
-            self.lua.execute(f.read())
+            #return self.lua.execute(f.read())
+            return self.lua.globals().loadstring(f.read())()
+
+    def prompt(self, text, call):
+        self.session.put(event.ModeEvent("prompt", text=text, call=call))
 
     def nmap(self, key, value):
         self.session.bindings.parseAndAdd(key, value)
@@ -125,6 +232,10 @@ class Lua(object):
                 self.session.encoding = value
             except:
                 self.error("Encoding {} not supported".format(value))
+
+    def markPrompt(self):
+        self.session.promptLine = self.session.lastLine
+        self.session.lastLine = ""
 
 class LuaExposedObject(object):
     def __init__(self, lua):
@@ -139,6 +250,22 @@ class LuaExposedObject(object):
 class Lua_Path(LuaExposedObject):
     def profile(self):
         return self._lua.profilePath
+
+class Lua_Context(LuaExposedObject):
+    def __init__(self, lua):
+        super().__init__(lua)
+
+        # Must be a pure lua function as we cannot yield across the Lua-Python boundary.
+        self.wait = lua.eval("function (self, trigs) return triggers.yield(trigs, self.recvTriggers) end")
+        self.waitSend = lua.eval("function (self, trigs) return triggers.yield(trigs, self.sendTriggers) end")
+        self.waitTime = lua.eval("function (self, trigs) return triggers.yield(trigs, self.timers) end")
+
+        self.reset()
+
+    def reset(self):
+        self.sendTriggers = self._lua.lua.globals().triggers.TriggerList.create()
+        self.recvTriggers = self._lua.lua.globals().triggers.TriggerList.create()
+        self.timers = self._lua.lua.globals().triggers.TriggerList.create()
 
 class Lua_Telnet(LuaExposedObject):
     # Constants
@@ -160,16 +287,16 @@ class Lua_Telnet(LuaExposedObject):
 
     def negWill(self, option):
         if not self._lua.session.telnet: raise Exception("Not connected")
-        self._lua.session.telnet.sendIAC(WILL, option)
+        self._lua.session.telnet.sendIAC(self.WILL, option)
     def negWont(self, option):
         if not self._lua.session.telnet: raise Exception("Not connected")
-        self._lua.session.telnet.sendIAC(WONT, option)
+        self._lua.session.telnet.sendIAC(self.WONT, option)
     def negDo(self, option):
         if not self._lua.session.telnet: raise Exception("Not connected")
-        self._lua.session.telnet.sendIAC(DO, option)
+        self._lua.session.telnet.sendIAC(self.DO, option)
     def negDont(self, option):
         if not self._lua.session.telnet: raise Exception("Not connected")
-        self._lua.session.telnet.sendIAC(DONT, option)
+        self._lua.session.telnet.sendIAC(self.DONT, option)
     def negSubneg(self, option, data):
         if not self._lua.session.telnet: raise Exception("Not connected")
         self._lua.session.telnet.sendSubneg(option, data)
@@ -205,8 +332,12 @@ class Lua_Map(LuaExposedObject):
     directions = property(getDirections, setDirections)
 
     def load(self, filename):
+        oldCurrentRoom = self._lua.session.map.currentRoom
+
         with open(filename, "r") as f:
             self._lua.session.map.load(f)
+
+        self._lua.session.map.goto(oldCurrentRoom)
 
     def load_old(self, filename):
         with open(filename, "r") as f:
@@ -227,20 +358,26 @@ class Lua_Map_Room(LuaExposedObject):
 
     def getEdges(self):
         return self._lua.lua.table(**dict([(e, Lua_Map_Edge(self._lua, self._roomId, e))
-                     for e in self._lua.session.map.rooms[self._roomId].edges]))
+                     for e in self._lua.session.map.rooms[self._roomId].getEdges()]))
 
     edges = property(getEdges)
 
     def getUserdata(self):
-        return self._lua.session.map.rooms[self._roomId].userdata
+        return self._lua.lua.table(**self._lua.session.map.rooms[self._roomId].userdata)
 
     userdata = property(getUserdata)
 
     def fly(self):
         self._lua.session.map.goto(self._roomId)
+        self._lua.hook("room")
 
-    def getPath(self, to):
-        return self._lua.lua.table(*self._lua.session.map.shortestPath(self._roomId, to._roomId))
+    def getPath(self, to, weightFunction=None):
+        if weightFunction:
+            def wf(r, d):
+                return weightFunction(Lua_Map_Room(self._lua, r), Lua_Map_Edge(self._lua, r, d))
+            return self._lua.lua.table(*self._lua.session.map.shortestPath(self._roomId, to._roomId, wf))
+        else:
+            return self._lua.lua.table(*self._lua.session.map.shortestPath(self._roomId, to._roomId))
 
 class Lua_Map_Edge(LuaExposedObject):
     def __init__(self, lua, rid, edge):
@@ -251,11 +388,11 @@ class Lua_Map_Edge(LuaExposedObject):
     def __str__(self):
         return "Edge '{}' from Room #{} to Room #{}".format(self._edge,
                                                             self._roomId,
-                                                            self._lua.session.map.rooms[self._roomId].edges[self._edge].dest.id)
+                                                            self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].dest.id)
 
     def getTo(self):
         return Lua_Map_Room(self._lua,
-                            self._lua.session.map.rooms[self._roomId].edges[self._edge].dest.id)
+                            self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].dest.id)
 
     def setTo(self, room):
         rid = 0
@@ -272,3 +409,16 @@ class Lua_Map_Edge(LuaExposedObject):
             raise Exception("Destination room not found")
 
     to = property(getTo, setTo)
+
+    def getWeight(self):
+        return self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].weight
+
+    def setWeight(self, weight):
+        self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].weight = weight
+
+    weight = property(getWeight, setWeight)
+
+    def getUserdata(self):
+        return self._lua.lua.table(**self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].userdata)
+
+    userdata = property(getUserdata)

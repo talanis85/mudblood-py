@@ -8,6 +8,7 @@ class LinebufferWindow(Window):
         super().__init__()
         self.type = "linebuffer"
         self.linebuffer = linebuffer
+        self.scroll = 0
 
 class MapWindow(Window):
     def __init__(self, map):

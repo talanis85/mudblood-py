@@ -33,6 +33,7 @@ class Room(object):
         self.id = id
         self.tag = None
         self.edges = {}
+        self.virtualEdges = []
         self.x = 0
         self.y = 0
         self.userdata = {}
@@ -56,6 +57,13 @@ class Room(object):
             ob['edges'][e] = self.edges[e].toJsonObj()
 
         return ob
+    
+    def getEdges(self):
+        ret = dict(self.edges)
+        for v in self.virtualEdges:
+            for d,e in v.edges.items():
+                ret[d] = e
+        return ret
 
     def updateCoords(self, map, x, y, visited):
         visited.add(self.id)
@@ -70,6 +78,7 @@ class Edge(object):
         self.dest = dest
         self.weight = 1
         self.split = False
+        self.userdata = {}
 
     @classmethod
     def fromJsonObj(cls, ob):
@@ -164,17 +173,23 @@ class Map(object):
                     if m.group(2) != "":
                         e = Edge(self.rooms[int(m.group(3))])
                         e.split = (m.group(5) == "1")
+                        e.weight = (m.group(6) == "1" and -1 or 1)
+                        e.userdata['level'] = int(m.group(7))
                         self.rooms[int(m.group(1))].edges[m.group(2)] = e
                     if m.group(4) != "":
                         e = Edge(self.rooms[int(m.group(1))])
                         e.split = (m.group(5) == "1")
+                        e.weight = (m.group(6) == "1" and -1 or 1)
+                        e.userdata['level'] = int(m.group(7))
                         self.rooms[int(m.group(3))].edges[m.group(4)] = e
             elif state == 4:
                 if l == "":
                     state = 5
                 else:
-                    # TODO: virtual edges
-                    pass
+                    m = re.match(r"^(\d+) (\d+) (\d)$", l)
+                    if m is None:
+                        raise InvalidMapFile("Expected virtual edge in line {}".format(line))
+                    self.rooms[int(m.group(1))].virtualEdges.append(self.rooms[int(m.group(2))])
             elif state == 5:
                 r = self.rooms[int(l)]
                 r.userdata['script'] = ""
@@ -208,7 +223,7 @@ class Map(object):
         else:
             raise KeyError("Room {} not found".format(id))
 
-    def shortestPath(self, fr, to):
+    def shortestPath(self, fr, to, weightFunction=None):
         import heapq
 
         visited = set()
@@ -221,9 +236,15 @@ class Map(object):
             if roomid == to:
                 return path
 
-            for d,e in self.rooms[roomid].edges.items():
+            for d,e in self.rooms[roomid].getEdges().items():
                 if e.dest.id not in visited:
-                    heapq.heappush(queue, (length + e.weight, e.dest.id, path + (d,)))
+                    if weightFunction:
+                        weight = weightFunction(roomid, d)
+                    else:
+                        weight = e.weight
+
+                    if weight >= 0:
+                        heapq.heappush(queue, (length + e.weight, e.dest.id, path + (d,)))
 
         return None
 
