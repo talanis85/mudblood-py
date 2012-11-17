@@ -340,8 +340,12 @@ class Lua_Map(LuaExposedObject):
         self._lua.session.map.goto(oldCurrentRoom)
 
     def load_old(self, filename):
+        oldCurrentRoom = self._lua.session.map.currentRoom
+
         with open(filename, "r") as f:
             self._lua.session.map.load_old(f)
+
+        self._lua.session.map.goto(oldCurrentRoom)
 
     def save(self, filename):
         with open(filename, "w") as f:
