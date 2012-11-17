@@ -69,6 +69,7 @@ class Lua(object):
         g.prompt = self.prompt
         g.load = self.load
         g.config = self.config
+        g.editor = self.editor
         g.path = Lua_Path(self)
 
         g.telnet = Lua_Telnet(self)
@@ -232,6 +233,9 @@ class Lua(object):
                 self.session.encoding = value
             except:
                 self.error("Encoding {} not supported".format(value))
+
+    def editor(self, content):
+        return MB().screen.editor(content)
 
     def markPrompt(self):
         self.session.promptLine = self.session.lastLine

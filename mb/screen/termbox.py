@@ -7,6 +7,9 @@ import keys
 import colors
 import map
 
+import subprocess
+import tempfile
+
 from mudblood import MB
 
 termbox.DEFAULT = 0x09
@@ -17,7 +20,7 @@ class TermboxSource(event.AsyncSource):
         super().__init__()
 
     def poll(self):
-        ret = self.tb.poll_event()
+        ret = self.tb.peek_event(1000)
         if ret == None:
             return None
 
@@ -45,6 +48,7 @@ class TermboxScreen(screen.Screen):
         # Create a source for user input
         self.source = TermboxSource(self.tb)
         self.source.start()
+        self.source.bind(MB().drain)
 
         # Create the mode manager
         self.modeManager = modes.ModeManager("normal", {
@@ -95,10 +99,10 @@ class TermboxScreen(screen.Screen):
                         fixh = 5
                         lines = w.linebuffer.render(self.width, w.scroll, wh - fixh) \
                               + w.linebuffer.render(self.width, 0, fixh) \
-                              + [MB().session.getPromptLine() + MB().session.getLastLine()]
+                              + [MB().session.getPromptLine()]
                     else:
                         lines = w.linebuffer.render(self.width, w.scroll, wh) \
-                              + [MB().session.getPromptLine() + MB().session.getLastLine()]
+                              + [MB().session.getPromptLine()]
                     if len(lines) < wh:
                         y += wh - len(lines)
 
@@ -181,6 +185,28 @@ class TermboxScreen(screen.Screen):
             raise KeyboardInterrupt()
 
         self.modeManager.key(key)
+
+    def editor(self, content):
+        ret = None
+        with tempfile.NamedTemporaryFile() as tmp:
+            tmp.write(content.encode('utf8'))
+            tmp.flush()
+
+            self.source.stop()
+            self.tb.close()
+
+            subprocess.call(["vim", tmp.name])
+
+            self.tb = termbox.Termbox()
+            self.source = TermboxSource(self.tb)
+            self.source.start()
+            self.source.bind(MB().drain)
+            self.tb.set_clear_attributes(termbox.DEFAULT, termbox.DEFAULT)
+            self.tb.set_cursor(-1, -1)
+
+            tmp.seek(0)
+            ret = tmp.read().decode('utf8')
+        return ret
 
 class NormalMode(modes.BufferMode):
     def __init__(self):

@@ -38,8 +38,6 @@ class Mudblood(metaclass=Singleton):
             import screen.debug
             self.screen = screen.debug.DebugScreen()
 
-        self.screen.source.bind(self.drain)
-
         # Initialize session
         try:
             os.chdir(os.path.join(os.environ['HOME'], ".config/mudblood-py"))
