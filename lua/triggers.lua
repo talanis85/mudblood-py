@@ -373,26 +373,11 @@ function M.gsub(pattern, fun)
                     else
                         curl = curl + 1
                     end
-                end
-                --local _, n = string.gsub(l, pattern[curl], function (...)
-                --    for _,v in ipairs(arg) do
-                --        table.insert(ret, v)
-                --    end
-                --    if curl == #pattern then
-                --        curl = 1
-                --        if fun then
-                --            r1, r3 = fun(unpack(ret))
-                --        end
-                --        ret = {}
-                --        r2 = true
-                --    else
-                --        curl = curl + 1
-                --    end
-                --end)
-                if n == 0 then
+                else
                     curl = 1
                     ret = {}
                 end
+
                 return r1, r2, r3
             end)
     end

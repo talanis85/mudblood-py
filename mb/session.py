@@ -59,13 +59,14 @@ class Session(event.Source):
                         self.encoding = ""
                         self.push(event.LogEvent("Still no luck. Giving up, sorry. Maybe try a different encoding?"))
         elif isinstance(ev, event.StringEvent):
+            tempqueue = []
             lines = ev.text.split("\n")
             firstLine = self.lastLine + lines[0]
             if len(lines) > 1:
                 parsedLines = []
                 for line in [firstLine] + lines[1:-1]:
                     parsedLines.append(self.ansi.parseToAString(line))
-                for parsedLine in reversed(parsedLines):
+                for parsedLine in parsedLines:
                     ret = None
                     try:
                         ret = self.lua.triggerRecv(str(parsedLine))
@@ -73,14 +74,16 @@ class Session(event.Source):
                         self.log("Lua error in send trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
 
                     if ret is None:
-                        self.push(event.EchoEvent(parsedLine))
+                        tempqueue.append(event.EchoEvent(parsedLine))
                     elif ret is False:
                         pass
                     else:
-                        self.push(event.EchoEvent(ansi.Ansi().parseToAString(ret)))
+                        tempqueue.append(event.EchoEvent(ansi.Ansi().parseToAString(ret)))
                 self.lastLine = lines[-1]
             else:
                 self.lastLine = firstLine
+            for e in reversed(tempqueue):
+                self.push(e)
         elif isinstance(ev, event.EchoEvent):
             self.print(ev.text)
 
