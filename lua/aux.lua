@@ -1,28 +1,51 @@
-function addTrigger(trig, ctx)
+function addTrigger(trig)
     ctxGlobal.recvTriggers:add(trig)
 end
 
-function removeTrigger(name, ctx)
-    context.get(ctx).out_triggers:remove(name)
+function removeTrigger(name)
+    ctxGlobal.recvTriggers:remove(name)
 end
 
-function addInputTrigger(trig, ctx)
-    context.get(ctx).in_triggers:add(trig)
+function addSendTrigger(trig)
+    ctxGlobal.sendTriggers:add(trig)
 end
 
-function removeInputTrigger(name, ctx)
-    context.get(ctx).in_triggers:remove(name)
+function removeSendTrigger(name)
+    ctxGlobal.sendTriggers:remove(name)
 end
 
-function yield(trigs, ctx)
-    triggers.yield(trigs, context.get(ctx).out_triggers)
+function yield(trigs)
+    triggers.yield(trigs, ctxRoom.recvTriggers)
 end
 
-function yieldInput(trigs, ctx)
-    triggers.yield(trigs, context.get(ctx).in_triggers)
+function yieldInput(trigs)
+    triggers.yield(trigs, ctxRoom.sendTriggers)
 end
 
-function yieldTimer(trigs, ctx)
-    triggers.yield(trigs, context.get(ctx).timers)
+function yieldTimer(trigs)
+    triggers.yield(trigs, ctxRoom.timers)
+end
+
+function roomSendBeforeExit(direction, str)
+    roomOnExit(direction, function ()
+        send(str)
+        directSend(direction)
+        map.room().edges[direction].to.fly()
+    end)
+end
+
+function roomOnExit(direction, fun)
+    ctxRoom.sendTriggers:add(triggers.gsub("^" .. direction .. "$", function ()
+        mapper.P()
+        fun()
+        mapper.V()
+        return false
+    end))
+end
+
+function roomWaitOnExit(direction, str)
+    roomOnExit(direction, function ()
+        ctxRoom:wait(triggers.gsub(str))
+    end)
 end
 
