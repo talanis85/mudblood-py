@@ -4,6 +4,7 @@ import linebuffer
 import codecs
 import event
 import map
+import rpc
 
 from mudblood import MB
 
@@ -71,6 +72,7 @@ class Lua(object):
         g.config = self.config
         g.editor = self.editor
         g.path = Lua_Path(self)
+        g.rpcOpen = self.rpcOpen
 
         g.telnet = Lua_Telnet(self)
         g.map = Lua_Map(self)
@@ -233,6 +235,11 @@ class Lua(object):
                 self.session.encoding = value
             except:
                 self.error("Encoding {} not supported".format(value))
+        elif key == "rpc":
+            self.session.setRPCSocket(value)
+
+    def rpcOpen(self, path):
+        return Lua_RPCClient(self, path)
 
     def editor(self, content):
         return MB().screen.editor(content)
@@ -270,6 +277,14 @@ class Lua_Context(LuaExposedObject):
         self.sendTriggers = self._lua.lua.globals().triggers.TriggerList.create()
         self.recvTriggers = self._lua.lua.globals().triggers.TriggerList.create()
         self.timers = self._lua.lua.globals().triggers.TriggerList.create()
+
+class Lua_RPCClient(LuaExposedObject):
+    def __init__(self, lua, path):
+        self._lua = lua
+        self._path = path
+
+    def __call__(self, func, *args):
+        rpc.call(self._path, func, args)
 
 class Lua_Telnet(LuaExposedObject):
     # Constants

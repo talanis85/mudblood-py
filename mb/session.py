@@ -10,6 +10,7 @@ import ansi
 import telnet
 import keys
 import map
+import rpc
 
 from mudblood import MB
 
@@ -30,6 +31,7 @@ class Session(event.Source):
         self.map = map.Map()
         self.mapWindow = window.MapWindow(self.map)
         self.windows = [window.LinebufferWindow(self.lb), self.mapWindow]
+        self.rpc = None
 
         if script:
             self.log("Loading {}".format(script), "info")
@@ -118,6 +120,13 @@ class Session(event.Source):
         elif isinstance(ev, telnet.TelnetEvent):
             self.luaHook("telneg", ev.cmd, ev.option, ev.data)
 
+        elif isinstance(ev, rpc.RPCEvent):
+            try:
+                f = getattr(self.lua.lua.globals(), ev.func)
+                f(*ev.args)
+            except Exception as e:
+                self.log("Lua error in RPC: {}\n{}".format(str(e), traceback.format_exc()), "err")
+
         if ev.continuation:
             ev.continuation()
     
@@ -156,6 +165,14 @@ class Session(event.Source):
 
         if ret:
             self.print(colors.AString("-> {}".format(ret)).fg(colors.MAGENTA))
+
+    def setRPCSocket(self, path):
+        if self.rpc:
+            self.rpc.stop()
+
+        self.rpc = rpc.RPCServerSocket(path)
+        self.rpc.bind(MB().drain)
+        self.rpc.start()
 
     def log(self, msg, level="info"):
         self.print("-- {}".format(msg))
