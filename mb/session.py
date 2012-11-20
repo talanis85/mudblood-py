@@ -122,7 +122,9 @@ class Session(event.Source):
 
         elif isinstance(ev, rpc.RPCEvent):
             try:
-                f = getattr(self.lua.lua.globals(), ev.func)
+                f = self.lua.lua.globals()
+                for s in ev.func:
+                    f = getattr(f, s)
                 f(*ev.args)
             except Exception as e:
                 self.log("Lua error in RPC: {}\n{}".format(str(e), traceback.format_exc()), "err")

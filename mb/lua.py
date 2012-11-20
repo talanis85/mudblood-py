@@ -239,7 +239,7 @@ class Lua(object):
             self.session.setRPCSocket(value)
 
     def rpcOpen(self, path):
-        return Lua_RPCClient(self, path)
+        return Lua_RPCObject(self, path)
 
     def editor(self, content):
         return MB().screen.editor(content)
@@ -278,13 +278,27 @@ class Lua_Context(LuaExposedObject):
         self.recvTriggers = self._lua.lua.globals().triggers.TriggerList.create()
         self.timers = self._lua.lua.globals().triggers.TriggerList.create()
 
-class Lua_RPCClient(LuaExposedObject):
-    def __init__(self, lua, path):
+class Lua_RPCObject(LuaExposedObject):
+    def __init__(self, lua, port, stack=[]):
         self._lua = lua
-        self._path = path
+        self._port = port
+        self._stack = stack
 
-    def __call__(self, func, *args):
-        rpc.call(self._path, func, args)
+    def __call__(self, *args):
+        if self._stack == []:
+            self._lua.error("Base RPCObject not callable.")
+        else:
+            rpc.call(self._port, self._stack, args)
+        return None
+
+    def __getattr__(self, key):
+        if hasattr(super(), key):
+            return getattr(super(), key)
+        else:
+            return Lua_RPCObject(self._lua, self._port, self._stack + [key])
+
+    def __getitem__(self, key):
+        return self.__getattr__(key)
 
 class Lua_Telnet(LuaExposedObject):
     # Constants
