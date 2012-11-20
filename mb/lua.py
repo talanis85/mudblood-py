@@ -72,6 +72,7 @@ class Lua(object):
         g.config = self.config
         g.editor = self.editor
         g.path = Lua_Path(self)
+        g.setRPCSocket = self.setRPCSocket
         g.rpcOpen = self.rpcOpen
 
         g.telnet = Lua_Telnet(self)
@@ -235,14 +236,18 @@ class Lua(object):
                 self.session.encoding = value
             except:
                 self.error("Encoding {} not supported".format(value))
-        elif key == "rpc":
-            self.session.setRPCSocket(value)
 
     def rpcOpen(self, path):
         return Lua_RPCObject(self, path)
 
     def editor(self, content):
         return MB().screen.editor(content)
+
+    def setRPCSocket(self, type, addr):
+        if type == "unix":
+            self.session.setRPCSocket(rpc.RPCServerSocket(addr))
+        else:
+            self.error("Supported socket types: unix")
 
     def markPrompt(self):
         self.session.promptLine = self.session.lastLine

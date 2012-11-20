@@ -122,10 +122,13 @@ class Session(event.Source):
 
         elif isinstance(ev, rpc.RPCEvent):
             try:
-                f = self.lua.lua.globals()
-                for s in ev.func:
-                    f = getattr(f, s)
-                f(*ev.args)
+                if ev.literal:
+                    self.lua.execute(ev.literal)
+                else:
+                    f = self.lua.lua.globals()
+                    for s in ev.func:
+                        f = getattr(f, s)
+                    f(*ev.args)
             except Exception as e:
                 self.log("Lua error in RPC: {}\n{}".format(str(e), traceback.format_exc()), "err")
 
@@ -168,11 +171,11 @@ class Session(event.Source):
         if ret:
             self.print(colors.AString("-> {}".format(ret)).fg(colors.MAGENTA))
 
-    def setRPCSocket(self, path):
+    def setRPCSocket(self, sock):
         if self.rpc:
             self.rpc.stop()
 
-        self.rpc = rpc.RPCServerSocket(path)
+        self.rpc = sock
         self.rpc.bind(MB().drain)
         self.rpc.start()
 
