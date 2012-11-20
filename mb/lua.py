@@ -289,6 +289,12 @@ class Lua_RPCObject(LuaExposedObject):
         self._port = port
         self._stack = stack
 
+    def call(self, string):
+        if self._stack != []:
+            self._lua.error("Only the top RPC object supports literal calls.")
+        else:
+            rpc.callLiteral(self._port, string)
+
     def __call__(self, *args):
         if self._stack == []:
             self._lua.error("Base RPCObject not callable.")
