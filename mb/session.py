@@ -115,7 +115,8 @@ class Session(event.Source):
         elif isinstance(ev, event.DirectInputEvent):
             self.push(event.SendEvent(ev.text + "\n"))
         elif isinstance(ev, event.SendEvent):
-            self.telnet.write((ev.data).encode(self.encoding))
+            if self.telnet:
+                self.telnet.write((ev.data).encode(self.encoding))
 
         elif isinstance(ev, telnet.TelnetEvent):
             self.luaHook("telneg", ev.cmd, ev.option, ev.data)
