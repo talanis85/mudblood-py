@@ -37,6 +37,10 @@ class RPCServerSocket(event.AsyncSource):
         self.put(event.LogEvent("Started RPC Server on {}".format(self.path), "info"))
         self.server.serve_forever()
 
+    def stop(self):
+        self.server.shutdown()
+        self.thread.join()
+
 def call(path, func, args):
     data = json.dumps({'func': func, 'args': args})
 
