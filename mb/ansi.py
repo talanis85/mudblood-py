@@ -5,14 +5,29 @@ class InvalidStateException(Exception):
     pass
 
 class FSM(object):
+    """
+    Generic class to implement a Finite State Machine.
+    """
     def __init__(self):
         self.reset()
 
     def reset(self):
+        """
+        Reset to initial state
+        """
         self.current = "start"
         self.debug = []
 
     def step(self, inp):
+        """
+        Perform one transition with an input.
+
+        The transition is carried out by the state_* method corresponding
+        to the current state.
+
+        TODO: This is not as generic as it should be. We return False
+        if we did a transition start -> start and True otherwise.
+        """
         self.debug.append(inp)
 
         if not hasattr(self, "state_" + self.current):
