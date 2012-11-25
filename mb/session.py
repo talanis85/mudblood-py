@@ -177,7 +177,7 @@ class Session(event.Source):
             self.rpc.stop()
 
         self.rpc = sock
-        self.rpc.bind(MB().drain)
+        self.rpc.bind(self)
         self.rpc.start()
 
     def log(self, msg, level="info"):
@@ -186,7 +186,7 @@ class Session(event.Source):
     # LUA FUNCTIONS
 
     def quit(self):
-        MB().drain.put(event.QuitEvent())
+        self.put(event.QuitEvent())
 
     def connect(self, host, port):
         if self.telnet:
@@ -202,7 +202,7 @@ class Session(event.Source):
             self.log("Could not connect: {}".format(str(e)))
             return
 
-        self.telnet.bind(MB().drain)
+        self.telnet.bind(self)
         self.log("Connection established.", "info")
         self.luaHook("connect", host, port)
         self.telnet.start()
