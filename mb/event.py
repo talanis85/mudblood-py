@@ -164,12 +164,14 @@ class Source(object):
         """
         Inject an event into the source.
         """
-        event.source = self
+        if not event.source:
+            event.source = self
         if self.drain:
             self.drain.put(event)
 
     def push(self, event):
-        event.source = self
+        if not event.source:
+            event.source = self
         if self.drain:
             self.drain.push(event)
 
