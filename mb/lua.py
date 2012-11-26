@@ -8,30 +8,6 @@ import rpc
 
 from mudblood import MB
 
-#def expose(f):
-#    f._lua_expose = True
-#    return f
-#
-#class LuaExposedObject(object):
-#    def __init__(self, ob, attrName):
-#        self.ob = ob
-#        self.attrName = attrName
-#
-#    def __getitem__(self, key):
-#        attr = getattr(self.ob, self.attrName)
-#        if attr:
-#            if hasattr(attr, "_luaVars"):
-#                luaVars = attr._luaVars
-#                if key in luaVars:
-#                    return luaVars[key]
-#            attr2 = getattr(attr, key)
-#            if hasattr(attr2, "_lua_expose") and attr2._lua_expose:
-#                return attr2
-#            else:
-#                raise KeyError("'{}' object has no attribute '{}'".format(attr.__class__.__name__, key))
-#        else:
-#            raise Exception("{} is not ready".format(self.attrName))
-
 class Lua(object):
     def __init__(self, session, packagePath):
         self.packagePath = packagePath
@@ -79,14 +55,6 @@ class Lua(object):
         g.map = Lua_Map(self)
 
         g.markPrompt = self.markPrompt
-
-    def exposeObject(self, ob):
-        ret = {}
-        for att in ob.__dict__:
-            att_ob = getattr(ob, att)
-            if hasattr(att_ob, "_lua_expose") and att_ob._lua_expose:
-                ret[att] = att_ob
-        return ret
 
     def loadFile(self, filename):
         self.profilePath = os.path.abspath(os.path.dirname(filename))
