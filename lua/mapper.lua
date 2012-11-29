@@ -23,7 +23,7 @@ local function walk_cr(room, weightFunction)
 
     for i=1,#p do
         local dir = p[i]
-        send(dir .. "\n", {continuation=cr, display=false})
+        send(dir, {continuation=cr, display=false})
         coroutine.yield()
         if walk_semaphore > 0 then
             coroutine.yield()

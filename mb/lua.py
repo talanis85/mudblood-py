@@ -88,31 +88,7 @@ class Lua(object):
 
     def triggerSend(self, line):
         g = self.lua.globals()
-        gret = None
-
-        crRet = g.ctxRoom.sendTriggers.query.coroutine(g.ctxRoom.sendTriggers, line).send(None)
-        if crRet is None:
-            return False
-
-        ret, _, _ = crRet
-        if ret is not None:
-            line = ret
-            gret = ret
-            if ret == False:
-                return False
-
-        crRet = g.ctxGlobal.sendTriggers.query.coroutine(g.ctxGlobal.sendTriggers, line).send(None)
-        if crRet is None:
-            return False
-
-        ret, _, _ = crRet
-        if ret is not None:
-            line = ret
-            gret = ret
-            if ret == False:
-                return False
-
-        return gret
+        g.triggers.queryListsAndSend.coroutine(self.lua.table(g.ctxRoom.sendTriggers, g.ctxGlobal.sendTriggers), line).send(None)
     
     def triggerRecv(self, line):
         g = self.lua.globals()

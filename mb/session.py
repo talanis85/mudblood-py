@@ -95,7 +95,7 @@ class Session(event.Source):
             self.telnet = None
 
         elif isinstance(ev, event.InputEvent):
-            for l in reversed(ev.text.split("\n")):
+            for l in ev.text.split("\n"):
                 if ev.display:
                     self.print(self.getPromptLine() + colors.AString(l).fg(colors.YELLOW))
                     self.lastLine = ""
@@ -105,13 +105,6 @@ class Session(event.Source):
                     ret = self.lua.triggerSend(l)
                 except Exception as e:
                     self.log("Lua error in send trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
-
-                if ret is None:
-                    self.push(event.DirectInputEvent(l))
-                elif ret is False:
-                    pass
-                else:
-                    self.push(event.DirectInputEvent(ret))
         elif isinstance(ev, event.DirectInputEvent):
             self.push(event.SendEvent(ev.text + "\n"))
         elif isinstance(ev, event.SendEvent):

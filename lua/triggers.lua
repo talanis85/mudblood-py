@@ -228,6 +228,23 @@ function M.TriggerList:query(l)
     end
 end
 
+function M.queryListsAndSend(lists, l)
+    gr2 = false
+    gr3 = false
+    for _, tlist in ipairs(lists) do
+        local r1,r2,r3 = tlist:query(l)
+        if r1 == false then
+            return false,r2,r3
+        elseif r1 ~= nil then
+            l = r1
+        end
+        if r2 then gr2 = true end
+        if r3 then gr3 = true end
+    end
+    directSend(l)
+    return false,gr2,gr3
+end
+
 --- String representation of the TriggerList.
 -- Returns a textual description of the TriggerList. The list is traversed
 -- recursively and the whole tree of trigger lists is returned.
