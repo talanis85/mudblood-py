@@ -15,6 +15,10 @@ import rpc
 from mudblood import MB
 
 class Session(event.Source):
+    """
+    A session is one single connection to a server. Every session has its own socket,
+    linebuffer, map and lua-runtime.
+    """
     def __init__(self, script=None):
         super().__init__()
 
@@ -43,9 +47,14 @@ class Session(event.Source):
         self.log("Session started.", "info")
 
     def event(self, ev):
-
-        # EVENT DISPATCHER
-
+        """
+        This function handles incoming events.
+        User input and data received from the socket are somewhat special, as they are
+        processed as chains of events:
+          RawEvent -> StringEvent -> EchoEvent
+        and
+          InputEvent -> DirectInputEvent -> SendEvent
+        """
         if isinstance(ev, event.RawEvent):
             if self.encoding != "":
                 try:
