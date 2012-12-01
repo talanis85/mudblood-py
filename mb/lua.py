@@ -308,6 +308,9 @@ class Lua_Map(LuaExposedObject):
         else:
             return Lua_Map_Room(self._lua, self._lua.session.map.findRoom(id))
 
+    def addRoom(self):
+        return Lua_Map_Room(self._lua, self._lua.session.map.addRoom().id)
+
     def getVisible(self):
         return self._lua.session.mapWindow.visible
     def setVisible(self, v):
@@ -361,6 +364,24 @@ class Lua_Map_Room(LuaExposedObject):
         return self._lua.session.map.rooms[self._roomId].userdata.get(key)
     def setUserdata(self, key, value):
         self._lua.session.map.rooms[self._roomId].userdata[key] = value
+
+    def getTag(self):
+        return self._lua.session.map.rooms[self._roomId].tag
+    def setTag(self, tag):
+        self._lua.session.map.rooms[self._roomId].tag = tag
+    tag = property(getTag, setTag)
+
+    def connect(self, other, name, opposite=None):
+        if name in self._lua.session.map.rooms[self._roomId].edges:
+            self._lua.error("Edge '{}' already present in {}".format(name, str(self)))
+        if opposite and opposite in self._lua.session.map.rooms[other._roomId].edges:
+            self._lua.error("Edge '{}' already present in {}".format(opposite, str(other)))
+
+        e1 = map.Edge(self._lua.session.map.rooms[other._roomId])
+        self._lua.session.map.rooms[self._roomId].edges[name] = e1
+        if opposite:
+            e2 = map.Edge(self._lua.session.map.rooms[self._roomId])
+            self._lua.session.map.rooms[other._roomId].edges[opposite] = e2
 
     def fly(self):
         self._lua.session.map.goto(self._roomId)

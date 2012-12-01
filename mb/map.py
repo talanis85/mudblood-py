@@ -215,8 +215,10 @@ class Map(object):
         json.dump(j, f)
 
     def addRoom(self):
-        self.rooms[self._nextRid] = Room(self._nextRid)
+        newroom = Room(self._nextRid)
+        self.rooms[self._nextRid] = newroom
         self._nextRid += 1
+        return newroom
 
     def findRoom(self, id):
         if isinstance(id, str):
