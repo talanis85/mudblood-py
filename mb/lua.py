@@ -412,8 +412,15 @@ class Lua_Map_Edge(LuaExposedObject):
         if not self._valid:
             self._lua.error("Edge '{}' is no longer valid.".format(self._edge))
 
-    def delete(self):
+    def delete(self, twoway=False):
         self._checkValid()
+
+        if twoway:
+            for k in self._lua.session.map.rooms[self._roomId].edges[self._edge].dest.edges.keys():
+                if self._lua.session.map.rooms[self._roomId].edges[self._edge].dest.edges[k].dest == self._lua.session.map.rooms[self._roomId]:
+                    del self._lua.session.map.rooms[self._roomId].edges[self._edge].dest.edges[k]
+                    break
+
         del self._lua.session.map.rooms[self._roomId].edges[self._edge]
         self._valid = False
 
