@@ -48,7 +48,7 @@ class Session(event.Source):
 
     def event(self, ev):
         """
-        This function handles incoming events.
+        This function handles incoming events (see event.py)
         User input and data received from the socket are somewhat special, as they are
         processed as chains of events:
           RawEvent -> StringEvent -> EchoEvent
