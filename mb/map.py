@@ -159,6 +159,7 @@ class Map(object):
                 nrooms = int(l)
                 for i in range(nrooms):
                     self.rooms[i] = Room(i)
+                    self._nextRid = i+1
                 state = 2
             elif state == 2:
                 if l == "":
