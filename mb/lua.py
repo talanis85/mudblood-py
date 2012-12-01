@@ -400,17 +400,31 @@ class Lua_Map_Edge(LuaExposedObject):
         super().__init__(lua)
         self._roomId = rid
         self._edge = edge
+        self._valid = True
 
     def __str__(self):
+        self._checkValid()
         return "Edge '{}' from Room #{} to Room #{}".format(self._edge,
                                                             self._roomId,
                                                             self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].dest.id)
 
+    def _checkValid(self):
+        if not self._valid:
+            self._lua.error("Edge '{}' is no longer valid.".format(self._edge))
+
+    def delete(self):
+        self._checkValid()
+        del self._lua.session.map.rooms[self._roomId].edges[self._edge]
+        self._valid = False
+
     def getTo(self):
+        self._checkValid()
         return Lua_Map_Room(self._lua,
                             self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].dest.id)
 
     def setTo(self, room):
+        self._checkValid()
+
         rid = 0
         if isinstance(room, int):
             rid = room
@@ -427,14 +441,18 @@ class Lua_Map_Edge(LuaExposedObject):
     to = property(getTo, setTo)
 
     def getWeight(self):
+        self._checkValid()
         return self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].weight
 
     def setWeight(self, weight):
+        self._checkValid()
         self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].weight = weight
 
     weight = property(getWeight, setWeight)
 
     def getUserdata(self, key):
+        self._checkValid()
         return self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].userdata.get(key)
     def setUserdata(self, key, value):
+        self._checkValid()
         self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].userdata[key] = value
