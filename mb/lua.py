@@ -386,6 +386,20 @@ class Lua_Map_Room(LuaExposedObject):
             e2 = map.Edge(self._lua.session.map.rooms[self._roomId])
             self._lua.session.map.rooms[other._roomId].edges[opposite] = e2
 
+    def findNeighbor(self, d):
+        neighbor = None
+        dx, dy = map.getDirectionDelta(self._lua.session.map.dirConfig[d])
+
+        def dfs_callback(r):
+            if self._lua.session.map.rooms[self._roomId].x + dx == r.x and self._lua.session.map.rooms[self._roomId].y + dy == r.y:
+                neighbor = r
+
+        self._lua.session.map.dfs(self._lua.session.map.rooms[self._roomId], dfs_callback)
+        if neighbor:
+            return Lua_Map_Room(self._lua, neighbor.id)
+        else:
+            return None
+
     def fly(self):
         self._lua.session.map.goto(self._roomId)
         self._lua.hook("room")

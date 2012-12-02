@@ -28,6 +28,9 @@ directions = {
 #        'd': ('u', 0, 0, -1),
         }
 
+def getDirectionDelta(d):
+    return (directions[d][1], directions[d][2])
+
 class Room(object):
     def __init__(self, id):
         self.id = id
@@ -73,13 +76,14 @@ class Room(object):
                 ret[d] = e
         return ret
 
-    def updateCoords(self, map, x, y, visited):
+    def dfs(self, map, x, y, callback, visited):
         visited.add(self.id)
         self.x = x
         self.y = y
+        callback(self)
         for d,e in self.edges.items():
-            if e.dest.id not in visited and d in directions:
-                e.dest.updateCoords(x + directions[d][1], y + directions[d][2], visited)
+            if e.dest.id not in visited and map.dirConfig[d] in directions:
+                e.dest.dfs(map, x + directions[map.dirConfig[d]][1], y + directions[map.dirConfig[d]][2], callback, visited)
 
 class Edge(object):
     def __init__(self, dest):
@@ -275,6 +279,9 @@ class Map(object):
 
     def goto(self, id):
         self.currentRoom = id
+
+    def dfs(self, room, callback):
+        room.dfs(self, 0, 0, callback, set())
 
 class MapRenderer(object):
     def __init__(self, map):
