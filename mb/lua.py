@@ -170,8 +170,11 @@ class Lua(object):
     def prompt(self, text, call):
         self.session.put(event.ModeEvent("prompt", text=text, call=call))
 
-    def nmap(self, key, value):
-        self.session.bindings.parseAndAdd(key, value)
+    def nmap(self, key, value=None):
+        if value is None:
+            self.session.bindings.delete(self.session.bindings.parse(key))
+        else:
+            self.session.bindings.add(self.session.bindings.parse(key), value)
 
     def config(self, key, value):
         if key == "encoding":

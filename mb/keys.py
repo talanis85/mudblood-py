@@ -94,6 +94,9 @@ class Bindings(object):
     def add(self, keys, value):
         self.bindings[keys] = value
 
+    def delete(self, keys):
+        del self.bindings[keys]
+
     def reset(self):
         self.keybuffer = []
 
@@ -121,7 +124,7 @@ class Bindings(object):
 
         return pref
 
-    def parseAndAdd(self, keystr, value):
+    def parse(self, keystr):
         keys = []
         specialKey = None
 
@@ -136,4 +139,4 @@ class Bindings(object):
             else:
                 specialKey += c
 
-        self.add(tuple(keys), value)
+        return tuple(keys)
