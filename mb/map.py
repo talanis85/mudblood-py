@@ -43,18 +43,26 @@ class Room(object):
         r = cls(ob['id'])
         r.tag = ob.get('tag', None)
         r.edges = {}
+        r.virtualEdges = []
+        r.userdata = ob['userdata']
         for e in ob.get('edges', []):
             r.edges[e] = Edge.fromJsonObj(ob['edges'][e])
+        for e in ob.get('virtualEdges', []):
+            r.virtualEdges.append(e)
         return r
 
     def toJsonObj(self):
         ob = {}
         ob['id'] = self.id
         ob['tag'] = self.tag
+        ob['userdata'] = self.userdata
 
         ob['edges'] = {}
+        ob['virtualEdges'] = []
         for e in self.edges:
             ob['edges'][e] = self.edges[e].toJsonObj()
+        for e in self.virtualEdges:
+            ob['virtualEdges'].append(e.id)
 
         return ob
     
@@ -83,11 +91,18 @@ class Edge(object):
     @classmethod
     def fromJsonObj(cls, ob):
         e = cls(ob['dest'])
+        e.weight = ob['weight']
+        e.split = ob['split']
+        e.userdata = ob['userdata']
+
         return e
     
     def toJsonObj(self):
         ob = {}
         ob['dest'] = self.dest.id
+        ob['split'] = self.split
+        ob['weight'] = self.weight
+        ob['userdata'] = self.userdata
 
         return ob
 
@@ -137,6 +152,8 @@ class Map(object):
         for r in self.rooms:
             for e in self.rooms[r].edges:
                 self.rooms[r].edges[e].dest = self.rooms[self.rooms[r].edges[e].dest]
+            for e in range(len(self.rooms[r].virtualEdges)):
+                self.rooms[r].virtualEdges[e] = self.rooms[self.rooms[r].virtualEdges[e]]
 
     def load_old(self, f):
         self.rooms = {}
