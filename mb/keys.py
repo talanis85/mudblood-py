@@ -70,6 +70,7 @@ KEY_CTRL_8		= 0x7F
 class Bindings(object):
     specialKeys = {
             "E": ord("\\"),
+            "ESC": ord("\x1b"),
             "TAB": ord("\t"),
 
             "F1": KEY_F1,
