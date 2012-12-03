@@ -1,12 +1,13 @@
 import os
 import lupa
-import linebuffer
 import codecs
-import event
-import map
-import rpc
 
-from mudblood import MB
+from mudblood import linebuffer
+from mudblood import event
+from mudblood import map
+from mudblood import rpc
+
+from mudblood.main import MB
 
 class Lua(object):
     def __init__(self, session, packagePath):

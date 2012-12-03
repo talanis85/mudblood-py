@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import sys
-sys.path = ["./mb"] + sys.path
+#import os
+sys.path = [".", "lib"] + sys.path
 
-from mudblood import Mudblood
+from mudblood.main import Mudblood
 
 config = {
         "script": None

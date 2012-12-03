@@ -1,3 +1,17 @@
+def main():
+    import sys
+
+    from mudblood.main import Mudblood
+
+    config = {
+            "script": None
+            }
+
+    if len(sys.argv) > 1:
+        config['script'] = sys.argv[1]
+
+    Mudblood("termbox").run(config)
+
 def MB():
     return Mudblood()
 
@@ -6,10 +20,10 @@ import os
 
 import time
 
-import event
-import session
-import linebuffer
-import window
+from mudblood import event
+from mudblood import session
+from mudblood import linebuffer
+from mudblood import window
 
 class Singleton(type):
     def __init__(cls, name, bases, dict):
@@ -32,11 +46,11 @@ class Mudblood(metaclass=Singleton):
 
     def run(self, config):
         if self.screenType == "termbox":
-            import screen.termbox
-            self.screen = screen.termbox.TermboxScreen()
+            import mudblood.screen.termbox
+            self.screen = mudblood.screen.termbox.TermboxScreen()
         elif self.screenType == "debug":
-            import screen.debug
-            self.screen = screen.debug.DebugScreen()
+            import mudblood.screen.debug
+            self.screen = mudblood.screen.debug.DebugScreen()
 
         # Initialize session
         try:

@@ -1,6 +1,6 @@
-import event
 import socket
-import lua
+from mudblood import event
+from mudblood import lua
 
 IAC = 255
 WILL = 251

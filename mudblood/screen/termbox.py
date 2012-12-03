@@ -1,16 +1,16 @@
 import termbox
-import event
-import linebuffer
-import modes
-import screen
-import keys
-import colors
-import map
+from mudblood import event
+from mudblood import linebuffer
+from mudblood import modes
+from mudblood import screen
+from mudblood import keys
+from mudblood import colors
+from mudblood import map
 
 import subprocess
 import tempfile
 
-from mudblood import MB
+from mudblood.main import MB
 
 termbox.DEFAULT = 0x09
 

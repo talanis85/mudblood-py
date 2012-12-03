@@ -1,18 +1,20 @@
 import os
 import traceback
 
-import lua
-import event
-import linebuffer
-import colors
-import window
-import ansi
-import telnet
-import keys
-import map
-import rpc
+from pkg_resources import Requirement, resource_filename
 
-from mudblood import MB
+from mudblood import lua
+from mudblood import event
+from mudblood import linebuffer
+from mudblood import colors
+from mudblood import window
+from mudblood import ansi
+from mudblood import telnet
+from mudblood import keys
+from mudblood import map
+from mudblood import rpc
+
+from mudblood.main import MB
 
 class Session(event.Source):
     """
@@ -22,7 +24,7 @@ class Session(event.Source):
     def __init__(self, script=None):
         super().__init__()
 
-        self.lua = lua.Lua(self, os.path.join(MB().path, "lua/?.lua"))
+        self.lua = lua.Lua(self, os.path.join(resource_filename(Requirement.parse("mudblood"), "mudblood/lua"), "?.lua"))
 
         self.lb = linebuffer.Linebuffer()
         self.bindings = keys.Bindings()

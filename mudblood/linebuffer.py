@@ -1,4 +1,4 @@
-from colors import AString
+from mudblood.colors import AString
 
 class Linebuffer(object):
     def __init__(self):

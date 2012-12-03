@@ -1,4 +1,4 @@
-import event
+from mudblood import event
 
 class Screen(event.Source):
     def updateScreen(self):

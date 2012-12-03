@@ -1,5 +1,5 @@
-from colors import AString
-import colors
+from mudblood.colors import AString
+from mudblood import colors
 
 class InvalidStateException(Exception):
     pass

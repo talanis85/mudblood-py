@@ -1,4 +1,4 @@
-import keys
+from mudblood import keys
 
 class ModeManager(object):
     def __init__(self, initMode, modes):

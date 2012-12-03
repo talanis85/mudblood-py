@@ -1,4 +1,4 @@
-import event
+from mudblood import event
 import socketserver
 import asynchat
 import socket
