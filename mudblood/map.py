@@ -82,7 +82,7 @@ class Room(object):
         self.y = y
         callback(self)
         for d,e in self.edges.items():
-            if e.dest.id not in visited and map.dirConfig[d] in directions:
+            if e.dest.id not in visited and d in map.dirConfig:
                 e.dest.dfs(map, x + directions[map.dirConfig[d]][1], y + directions[map.dirConfig[d]][2], callback, visited)
 
 class Edge(object):
