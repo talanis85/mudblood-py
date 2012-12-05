@@ -465,6 +465,16 @@ class Lua_Map_Edge(LuaExposedObject):
 
     to = property(getTo, setTo)
 
+    def getSplit(self):
+        self._checkValid()
+        return self._lua.session.map.rooms[self._roomId].edges[self._edge].split
+
+    def setSplit(self, split):
+        self._checkValid()
+        self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].split = split
+
+    split = property(getSplit, setSplit)
+
     def getWeight(self):
         self._checkValid()
         return self._lua.session.map.rooms[self._roomId].getEdges()[self._edge].weight
