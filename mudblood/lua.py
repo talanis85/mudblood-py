@@ -1,6 +1,7 @@
 import os
 import lupa
 import codecs
+import traceback
 
 from mudblood import linebuffer
 from mudblood import event
@@ -142,7 +143,10 @@ class Lua(object):
     def send(self, data, args={}):
         def cont():
             try:
-                args['continuation'].send(None)
+                # This has to be executed as a coroutine, otherwise the continuation
+                # function would be ran not in the main thread but in the lua thread
+                # where send() was called. No idea why.
+                args['continuation'].coroutine().send(None)
             except StopIteration:
                 pass
             except Exception as e:

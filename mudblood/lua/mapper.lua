@@ -13,6 +13,8 @@ local function walk_cr(room, weightFunction)
     local p = map.room().getPath(room, weightFunction)
     local cr = coroutine.running()
 
+    walk_stop = false
+
     p_debug = ""
     for _, pp in ipairs(p) do
         p_debug = p_debug .. pp .. ", "
@@ -23,8 +25,8 @@ local function walk_cr(room, weightFunction)
 
     for i=1,#p do
         local dir = p[i]
-        send(dir, {continuation=cr, display=false})
-        coroutine.yield()
+        M.P()
+        send(dir, {continuation=M.V, display=false})
         if walk_semaphore > 0 then
             coroutine.yield()
         end
@@ -53,6 +55,8 @@ end
 
 function M.stop()
     walk_semaphore = 0
+    walk_stop = true
+    M.V()
 end
 
 function M.P()

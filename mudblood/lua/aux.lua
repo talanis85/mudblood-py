@@ -34,12 +34,9 @@ end
 
 function roomOnExit(direction, fun)
     ctxRoom.sendTriggers:add(triggers.gsub("^" .. direction .. "$", function ()
-        mapper.P()
         local ret = fun()
         if ret == false then
             mapper.stop()
-        else
-            mapper.V()
         end
 
         return ret

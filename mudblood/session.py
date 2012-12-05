@@ -138,7 +138,10 @@ class Session(event.Source):
                 self.log("Lua error in RPC: {}\n{}".format(str(e), traceback.format_exc()), "err")
 
         if ev.continuation:
-            ev.continuation()
+            try:
+                ev.continuation()
+            except Exception as e:
+                self.log("Lua error: {}\n{}".format(str(e), traceback.format_exc()), "err")
     
     def getLastLine(self):
         return ansi.Ansi().parseToAString(self.lastLine)

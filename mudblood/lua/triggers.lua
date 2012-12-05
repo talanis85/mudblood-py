@@ -18,6 +18,7 @@ require "os"
 require "coroutine"
 
 local colors = require "colors"
+local mapper = require "mapper"
 
 function string:split(sep)
     ret = {}
@@ -231,9 +232,11 @@ end
 function M.queryListsAndSend(lists, l)
     gr2 = false
     gr3 = false
+    mapper.P()
     for _, tlist in ipairs(lists) do
         local r1,r2,r3 = tlist:query(l)
         if r1 == false then
+            mapper.V()
             return false,r2,r3
         elseif r1 ~= nil then
             l = r1
@@ -242,6 +245,7 @@ function M.queryListsAndSend(lists, l)
         if r3 then gr3 = true end
     end
     directSend(l)
+    mapper.V()
     return false,gr2,gr3
 end
 
