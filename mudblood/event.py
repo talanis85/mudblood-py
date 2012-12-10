@@ -153,25 +153,6 @@ class RawEvent(Event):
         super().__init__()
         self.data = data
 
-class StringEvent(Event):
-    """
-    Decoded data from a telnet socket.
-    Emitted by: Session
-    """
-    def __init__(self, text):
-        super().__init__()
-        self.text = text
-
-class EchoEvent(Event):
-    """
-    Requests a session to add text to its linebuffer.
-    Emitted by: Session
-    """
-    def __init__(self, text):
-        super().__init__()
-        self.text = text
-
-
 class InputEvent(Event):
     """
     A line of input was made or the lua function send() was called.
@@ -181,24 +162,6 @@ class InputEvent(Event):
         super().__init__()
         self.text = text
         self.display = True
-
-class DirectInputEvent(Event):
-    """
-    A single line of data should be sent to the socket.
-    Emitted by: Session
-    """
-    def __init__(self, text):
-        super().__init__()
-        self.text = text
-
-class SendEvent(Event):
-    """
-    Somewhat redundant. Encode a single line and send it to the socket.
-    Emitted by: Session
-    """
-    def __init__(self, data):
-        super().__init__()
-        self.data = data
 
 class CallableEvent(Event):
     """

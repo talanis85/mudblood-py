@@ -51,13 +51,9 @@ class Session(event.Source):
     def event(self, ev):
         """
         This function handles incoming events (see event.py)
-        User input and data received from the socket are somewhat special, as they are
-        processed as chains of events:
-          RawEvent -> StringEvent -> EchoEvent
-        and
-          InputEvent -> DirectInputEvent -> SendEvent
         """
         if isinstance(ev, event.RawEvent):
+            text = None
             if self.encoding != "":
                 try:
                     text = ev.data.decode(self.encoding)
@@ -71,9 +67,9 @@ class Session(event.Source):
                     except UnicodeDecodeError as e:
                         self.encoding = ""
                         self.push(event.LogEvent("Still no luck. Giving up, sorry. Maybe try a different encoding?"))
-        elif isinstance(ev, event.StringEvent):
-            tempqueue = []
-            lines = ev.text.split("\n")
+                        return
+
+            lines = text.split("\n")
             firstLine = self.lastLine + lines[0]
             if len(lines) > 1:
                 parsedLines = []
@@ -87,18 +83,14 @@ class Session(event.Source):
                         self.log("Lua error in send trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
 
                     if ret is None:
-                        tempqueue.append(event.EchoEvent(parsedLine))
+                        self.print(parsedLine)
                     elif ret is False:
                         pass
                     else:
-                        tempqueue.append(event.EchoEvent(ansi.Ansi().parseToAString(ret)))
+                        self.print(ansi.Ansi().parseToAString(ret))
                 self.lastLine = lines[-1]
             else:
                 self.lastLine = firstLine
-            for e in reversed(tempqueue):
-                self.push(e)
-        elif isinstance(ev, event.EchoEvent):
-            self.print(ev.text)
 
         elif isinstance(ev, event.DisconnectEvent):
             self.log("Connection closed.", "info")
@@ -106,21 +98,10 @@ class Session(event.Source):
             self.telnet = None
 
         elif isinstance(ev, event.InputEvent):
-            for l in ev.text.split("\n"):
-                if ev.display:
-                    self.print(self.getPromptLine() + colors.AString(l).fg(colors.YELLOW))
-                    self.lastLine = ""
+            self.print(self.getPromptLine() + colors.AString(ev.text).fg(colors.YELLOW))
+            self.lastLine = ""
 
-                ret = None
-                try:
-                    ret = self.lua.triggerSend(l)
-                except Exception as e:
-                    self.log("Lua error in send trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
-        elif isinstance(ev, event.DirectInputEvent):
-            self.push(event.SendEvent(ev.text + "\n"))
-        elif isinstance(ev, event.SendEvent):
-            if self.telnet:
-                self.telnet.write((ev.data).encode(self.encoding))
+            self.processInput(ev.text)
 
         elif isinstance(ev, telnet.TelnetEvent):
             self.luaHook("telneg", ev.cmd, ev.option, ev.data)
@@ -142,7 +123,19 @@ class Session(event.Source):
                 ev.continuation()
             except Exception as e:
                 self.log("Lua error: {}\n{}".format(str(e), traceback.format_exc()), "err")
-    
+
+    def processInput(self, text):
+        for l in text.split("\n"):
+            ret = None
+            try:
+                ret = self.lua.triggerSend(l)
+            except Exception as e:
+                self.log("Lua error in send trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
+
+    def send(self, text):
+        if self.telnet:
+            self.telnet.write((text + "\n").encode(self.encoding))
+
     def getLastLine(self):
         return ansi.Ansi().parseToAString(self.lastLine)
     def getPromptLine(self):

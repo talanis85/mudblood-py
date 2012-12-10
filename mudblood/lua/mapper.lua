@@ -24,9 +24,7 @@ local function walk_cr(room, weightFunction)
     if M.pre_walk then M.pre_walk() end
 
     for i=1,#p do
-        local dir = p[i]
-        M.P()
-        send(dir, {continuation=M.V, display=false})
+        send(p[i])
         if walk_semaphore > 0 then
             coroutine.yield()
         end
@@ -72,9 +70,11 @@ function M.V()
         end
 
         if walk_semaphore == 0 then
-            local status, err = coroutine.resume(walker)
-            if status ~= true then
-                error(err)
+            if coroutine.status(walker) ~= "normal" then
+                local status, err = coroutine.resume(walker)
+                if status ~= true then
+                    error(err)
+                end
             end
         end
     end

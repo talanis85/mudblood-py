@@ -141,31 +141,13 @@ class Lua(object):
         self.session.put(event.ModeEvent(m))
 
     def send(self, data, args={}):
-        def cont():
-            try:
-                # This has to be executed as a coroutine, otherwise the continuation
-                # function would be ran not in the main thread but in the lua thread
-                # where send() was called. No idea why.
-                args['continuation'].coroutine().send(None)
-            except StopIteration:
-                pass
-            except Exception as e:
-                self.session.log("Lua error in event continuation: {}\n{}".format(str(e), traceback.format_exc()), "err")
-
-        ev = event.InputEvent(data)
-
-        if "continuation" in args:
-            ev.continuation = cont
-        if "display" in args:
-            ev.display = args['display']
-
-        self.session.put(ev)
+        self.session.processInput(data)
 
     def directSend(self, data):
-        self.session.put(event.DirectInputEvent(data))
+        self.session.send(data)
 
     def print(self, ob):
-        self.session.put(event.EchoEvent(self.toString(ob)))
+        self.session.print(self.toString(ob))
 
     def load(self, filename):
         with open(os.path.join(self.profilePath, filename), "r") as f:
@@ -433,6 +415,11 @@ class Lua_Map_Edge(LuaExposedObject):
     def _checkValid(self):
         if not self._valid:
             self._lua.error("Edge '{}' is no longer valid.".format(self._edge))
+
+    def getName(self):
+        return self._edge
+
+    name = property(getName)
 
     def delete(self, twoway=False):
         self._checkValid()
