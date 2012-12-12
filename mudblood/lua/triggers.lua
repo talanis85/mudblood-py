@@ -230,23 +230,52 @@ function M.TriggerList:query(l)
 end
 
 function M.queryListsAndSend(lists, l)
-    gr2 = false
-    gr3 = false
+    local gr2 = false
+    local gr3 = false
+    local changed = false
     mapper.P()
     for _, tlist in ipairs(lists) do
         local r1,r2,r3 = tlist:query(l)
         if r1 == false then
             mapper.V()
-            return false,r2,r3
+            return true
         elseif r1 ~= nil then
             l = r1
+            changed = true
         end
         if r2 then gr2 = true end
         if r3 then gr3 = true end
     end
     directSend(l)
     mapper.V()
-    return false,gr2,gr3
+    return true
+end
+
+function M.queryListsAndEcho(lists, al)
+    local l = tostring(al)
+    local gr2 = false
+    local gr3 = false
+    local changed = false
+    mapper.P()
+    for _, tlist in ipairs(lists) do
+        local r1,r2,r3 = tlist:query(l)
+        if r1 == false then
+            mapper.V()
+            return true
+        elseif r1 ~= nil then
+            l = r1
+            changed = true
+        end
+        if r2 then gr2 = true end
+        if r3 then gr3 = true end
+    end
+    if changed then
+        print(l)
+    else
+        print(al)
+    end
+    mapper.V()
+    return true
 end
 
 --- String representation of the TriggerList.

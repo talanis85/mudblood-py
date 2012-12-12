@@ -70,6 +70,9 @@ class AString(object):
     
     def __repr__(self):
         return self.__str__()
+    
+    def toString(self):
+        return self.__str__()
 
     def attribute(self, att):
         new = []

@@ -7,6 +7,8 @@ from mudblood import linebuffer
 from mudblood import event
 from mudblood import map
 from mudblood import rpc
+from mudblood import colors
+from mudblood import ansi
 
 from mudblood.main import MB
 
@@ -94,27 +96,7 @@ class Lua(object):
     
     def triggerRecv(self, line):
         g = self.lua.globals()
-        gret = None
-
-        crRet = g.ctxRoom.recvTriggers.query.coroutine(g.ctxRoom.recvTriggers, line).send(None)
-        if crRet is None:
-            return False
-
-        ret, _, _ = crRet
-        if ret is not None:
-            line = ret
-            gret = ret
-
-        crRet = g.ctxGlobal.recvTriggers.query.coroutine(g.ctxGlobal.recvTriggers, line).send(None)
-        if crRet is None:
-            return False
-
-        ret, _, _ = crRet
-        if ret is not None:
-            line = ret
-            gret = ret
-
-        return gret
+        g.triggers.queryListsAndEcho.coroutine(self.lua.table(g.ctxRoom.recvTriggers, g.ctxGlobal.recvTriggers), line).send(None)
 
     def triggerTime(self):
         g = self.lua.globals()
@@ -147,7 +129,12 @@ class Lua(object):
         self.session.send(data)
 
     def print(self, ob):
-        self.session.print(self.toString(ob))
+        if isinstance(ob, colors.AString):
+            self.session.print(ob)
+        elif isinstance(ob, str):
+            self.session.print(ansi.Ansi().parseToAString(ob))
+        else:
+            self.session.print(colors.AString(str(ob)))
 
     def load(self, filename):
         with open(os.path.join(self.profilePath, filename), "r") as f:

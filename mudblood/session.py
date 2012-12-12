@@ -57,13 +57,11 @@ class Session(event.Source):
             if self.encoding != "":
                 try:
                     text = ev.data.decode(self.encoding)
-                    self.push(event.StringEvent(text))
                 except UnicodeDecodeError as e:
                     self.encoding = "utf8"
                     self.put(LogEvent("Error decoding data. Switching to 'utf8'"))
                     try:
                         text = ev.data.decode(self.encoding)
-                        self.push(event.StringEvent(text))
                     except UnicodeDecodeError as e:
                         self.encoding = ""
                         self.push(event.LogEvent("Still no luck. Giving up, sorry. Maybe try a different encoding?"))
@@ -78,16 +76,10 @@ class Session(event.Source):
                 for parsedLine in parsedLines:
                     ret = None
                     try:
-                        ret = self.lua.triggerRecv(str(parsedLine))
+                        ret = self.lua.triggerRecv(parsedLine)
                     except Exception as e:
-                        self.log("Lua error in send trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
+                        self.log("Lua error in recv trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
 
-                    if ret is None:
-                        self.print(parsedLine)
-                    elif ret is False:
-                        pass
-                    else:
-                        self.print(ansi.Ansi().parseToAString(ret))
                 self.lastLine = lines[-1]
             else:
                 self.lastLine = firstLine
