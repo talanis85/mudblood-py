@@ -110,8 +110,8 @@ class LogEvent(Event):
     Adds a message to the log console.
     Emitted by: *
     """
-    def __init__(self, msg, level):
-        super().__init__()
+    def __init__(self, msg, level="info"):
+        super(LogEvent, self).__init__()
         self.msg = msg
         self.level = level
 
@@ -121,7 +121,7 @@ class KeyEvent(Event):
     Emitted by: Screen
     """
     def __init__(self, key):
-        super().__init__()
+        super(KeyEvent, self).__init__()
         self.key = key
 
 class ResizeEvent(Event):
@@ -130,7 +130,7 @@ class ResizeEvent(Event):
     Emitted by: Screen
     """
     def __init__(self, w, h):
-        super().__init__()
+        super(ResizeEvent, self).__init__()
         self.w = w
         self.h = h
 
@@ -140,7 +140,7 @@ class ModeEvent(Event):
     Emitted by: Session
     """
     def __init__(self, mode, **kwargs):
-        super().__init__()
+        super(ModeEvent, self).__init__()
         self.mode = mode
         self.args = kwargs
 
@@ -150,8 +150,11 @@ class RawEvent(Event):
     Emitted by: Telnet
     """
     def __init__(self, data):
-        super().__init__()
+        super(RawEvent, self).__init__()
         self.data = data
+    
+    def __repr__(self):
+        return "RawEvent: {}".format(self.data)
 
 class InputEvent(Event):
     """
@@ -159,7 +162,7 @@ class InputEvent(Event):
     Emitted by: Session, Screen
     """
     def __init__(self, text):
-        super().__init__()
+        super(InputEvent, self).__init__()
         self.text = text
         self.display = True
 
@@ -169,7 +172,7 @@ class CallableEvent(Event):
     Emitted by: *
     """
     def __init__(self, call, *args):
-        super().__init__()
+        super(CallableEvent, self).__init__()
         self.call = call
         self.args = args
 
@@ -222,7 +225,7 @@ class AsyncSource(Source):
     thread.
     """
     def __init__(self):
-        super().__init__()
+        super(AsyncSource, self).__init__()
         self.thread = threading.Thread(target=self.run)
         self.thread.daemon = True
 
@@ -257,23 +260,29 @@ class FileSource(AsyncSource):
     def __init__(self, file, chunksize):
         self.file = file
         self.chunksize = chunksize
-        super().__init__()
+        super(FileSource, self).__init__()
         self.start()
 
     def poll(self):
         return RawEvent(self.file.read(self.chunksize))
 
 class SocketSource(AsyncSource):
-    def __init__(self, socket):
-        super().__init__()
-        self.socket = socket
+    def __init__(self):
+        super(SocketSource, self).__init__()
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connected = False
+
+    def connect(self, host, port):
+        self.socket.connect((host, port))
+        self.connected = True
 
     def poll(self):
         try:
-            return RawEvent(self.socket.recv(1024))
+            if self.connected:
+                return RawEvent(self.socket.recv(1024))
         except:
-            # TODO: Specify, which exception(s) should be caught
             self.running = False
+            self.connected = False
             return DisconnectEvent()
 
 class GtkInputSource(Source):

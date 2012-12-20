@@ -1,3 +1,5 @@
+mainMB = None
+
 def main():
     import sys
 
@@ -10,10 +12,12 @@ def main():
     if len(sys.argv) > 1:
         config['script'] = sys.argv[1]
 
-    Mudblood("termbox").run(config)
+    global mainMB
+    mainMB = Mudblood("termbox");
+    mainMB.run(config)
 
 def MB():
-    return Mudblood()
+    return mainMB
 
 import sys
 import os
@@ -25,17 +29,19 @@ from mudblood import session
 from mudblood import linebuffer
 from mudblood import window
 
-class Singleton(type):
-    def __init__(cls, name, bases, dict):
-        super(Singleton, cls).__init__(name, bases, dict)
-        cls.instance = None 
+#class Singleton(type):
+#    def __init__(cls, name, bases, dict):
+#        super(Singleton, cls).__init__(name, bases, dict)
+#        cls.instance = None 
+#
+#    def __call__(cls,*args,**kw):
+#        if cls.instance is None:
+#            cls.instance = super(Singleton, cls).__call__(*args, **kw)
+#        return cls.instance
 
-    def __call__(cls,*args,**kw):
-        if cls.instance is None:
-            cls.instance = super(Singleton, cls).__call__(*args, **kw)
-        return cls.instance
+class Mudblood(object):
+    #__metaclass__ = Singleton
 
-class Mudblood(metaclass=Singleton):
     def __init__(self, screenType):
         self.session = None
         self.drain = event.Drain()
@@ -46,8 +52,8 @@ class Mudblood(metaclass=Singleton):
 
     def run(self, config):
         if self.screenType == "termbox":
-            import mudblood.screen.termbox
-            self.screen = mudblood.screen.termbox.TermboxScreen()
+            import mudblood.screen.tbscreen
+            self.screen = mudblood.screen.tbscreen.TermboxScreen()
         elif self.screenType == "debug":
             import mudblood.screen.debug
             self.screen = mudblood.screen.debug.DebugScreen()
@@ -69,6 +75,7 @@ class Mudblood(metaclass=Singleton):
 
         self.session = session.Session(config['script'])
         self.session.bind(self.drain)
+        self.session.start()
 
         self.screen.update()
 
@@ -99,17 +106,18 @@ class Mudblood(metaclass=Singleton):
         self.screen.destroy()
 
     def event(self, ev):
+        self.log(str(ev), "debug3")
         if isinstance(ev, event.LogEvent):
             self.log(ev.msg, ev.level)
         elif isinstance(ev, event.KeyEvent):
             self.screen.keyEvent(ev.key)
         elif isinstance(ev, event.ResizeEvent):
-            self.log("Window Resize ({}x{})".format(ev.w, ev.h), "debug")
+            #self.log("Window Resize ({}x{})".format(ev.w, ev.h), "debug")
             #self.screen.updateSize()
             self.screen.updateSize(ev.w, ev.h)
             #self.screen.updateSize(10, 10)
         elif isinstance(ev, event.ModeEvent):
-            self.log("Changed mode to {} ({})".format(ev.mode, ev.args), "debug")
+            #self.log("Changed mode to {} ({})".format(ev.mode, ev.args), "debug")
             self.screen.modeManager.setMode(ev.mode, **ev.args)
         elif isinstance(ev, event.CallableEvent):
             try:

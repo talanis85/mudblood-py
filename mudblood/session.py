@@ -22,7 +22,7 @@ class Session(event.Source):
     linebuffer, map and lua-runtime.
     """
     def __init__(self, script=None):
-        super().__init__()
+        super(Session, self).__init__()
 
         self.lua = lua.Lua(self, os.path.join(resource_filename(Requirement.parse("mudblood"), "mudblood/lua"), "?.lua"))
 
@@ -38,11 +38,13 @@ class Session(event.Source):
         self.mapWindow = window.MapWindow(self.map)
         self.windows = [window.LinebufferWindow(self.lb), self.mapWindow]
         self.rpc = None
+        self.script = script
 
-        if script:
-            self.log("Loading {}".format(script), "info")
+    def start(self):
+        if self.script:
+            self.log("Loading {}".format(self.script), "info")
             try:
-                self.lua.loadFile(script + "/profile.lua")
+                self.lua.loadFile(self.script + "/profile.lua")
             except Exception as e:
                 self.log("Lua error: {}\n{}".format(str(e), traceback.format_exc()), "err")
 
@@ -90,12 +92,13 @@ class Session(event.Source):
             self.telnet = None
 
         elif isinstance(ev, event.InputEvent):
-            self.print(self.getPromptLine() + colors.AString(ev.text).fg(colors.YELLOW))
+            self.echo(self.getPromptLine() + colors.AString(ev.text).fg(colors.YELLOW))
             self.lastLine = ""
 
             self.processInput(ev.text)
 
         elif isinstance(ev, telnet.TelnetEvent):
+            self.put(event.LogEvent("Received Telneg {}".format(ev)))
             self.luaHook("telneg", ev.cmd, ev.option, ev.data)
 
         elif isinstance(ev, rpc.RPCEvent):
@@ -139,7 +142,7 @@ class Session(event.Source):
     def getStatusLine(self):
         return (self.lua.eval("mapper.walking()") and "WALKING" or "NOT WALKING")
     
-    def print(self, string):
+    def echo(self, string):
         self.lb.echo(string)
 
     def luaHook(self, hook, *args):
@@ -162,7 +165,7 @@ class Session(event.Source):
             return
 
         if ret:
-            self.print(colors.AString("-> {}".format(ret)).fg(colors.MAGENTA))
+            self.echo(colors.AString("-> {}".format(ret)).fg(colors.MAGENTA))
 
     def setRPCSocket(self, sock):
         if self.rpc:
@@ -173,7 +176,7 @@ class Session(event.Source):
         self.rpc.start()
 
     def log(self, msg, level="info"):
-        self.print("-- {}".format(msg))
+        self.echo("-- {}".format(msg))
 
     # LUA FUNCTIONS
 
@@ -188,16 +191,18 @@ class Session(event.Source):
         self.log("Connecting to {}:{} ...".format(host, port), "info")
 
         try:
-            self.telnet = telnet.Telnet(host, port)
+            sock = telnet.TCPSocket()
+            self.telnet = telnet.Telnet(sock)
+            self.telnet.bind(self)
+            sock.connect(host, port)
+            self.telnet.start()
         except Exception as e:
             self.telnet = None
             self.log("Could not connect: {}".format(str(e)))
             return
 
-        self.telnet.bind(self)
         self.log("Connection established.", "info")
         self.luaHook("connect", host, port)
-        self.telnet.start()
 
     def status(self, string=None):
         if string is None:

@@ -17,7 +17,7 @@ class AString(object):
     def __init__(self, string=""):
         self.string = []
 
-        if isinstance(string, str):
+        if isinstance(string, basestring):
             for c in string:
                 self.string.append((self.defaultAttributes, c))
         elif isinstance(string, AString):
@@ -51,7 +51,7 @@ class AString(object):
             self.string.extend(other.string)
         elif isinstance(other, tuple):
             self.string.append(other)
-        elif isinstance(other, str):
+        elif isinstance(other, basestring):
             for c in other:
                 self.string.append((self.defaultAttributes, c))
         else:

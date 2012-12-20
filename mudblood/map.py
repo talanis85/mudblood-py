@@ -243,7 +243,7 @@ class Map(object):
         return newroom
 
     def findRoom(self, id):
-        if isinstance(id, str):
+        if isinstance(id, basestring):
             for r in self.rooms.values():
                 if r.tag == id:
                     id = r.id

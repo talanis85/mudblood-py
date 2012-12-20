@@ -49,7 +49,7 @@ class FSM(object):
 # TODO: React to [CSI (0) c] with [CSI 60;22;c]
 class Ansi(FSM):
     def __init__(self):
-        super().__init__()
+        super(Ansi, self).__init__()
         self.reset()
 
     def parseToAString(self, string):
@@ -60,11 +60,11 @@ class Ansi(FSM):
                     ret += AString(c).attribute(self.attr)
             except InvalidStateException as e:
                 ret += "<ESC>" + str(e)
-                super().reset()
+                super(Ansi, self).reset()
         return ret
 
     def reset(self):
-        super().reset()
+        super(Ansi, self).reset()
         self.attr = (9, 9, 0)
 
     def state_start(self, c):

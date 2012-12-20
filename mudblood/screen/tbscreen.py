@@ -17,7 +17,7 @@ termbox.DEFAULT = 0x09
 class TermboxSource(event.AsyncSource):
     def __init__(self, tb):
         self.tb = tb
-        super().__init__()
+        super(TermboxSource, self).__init__()
 
     def poll(self):
         ret = self.tb.peek_event(1000)
@@ -210,7 +210,7 @@ class TermboxScreen(screen.Screen):
 
 class NormalMode(modes.BufferMode):
     def __init__(self):
-        super().__init__()
+        super(NormalMode, self).__init__()
 
     def onKey(self, key):
         bindret = MB().session.bindings.key(key)
@@ -235,7 +235,7 @@ class NormalMode(modes.BufferMode):
                 if MB().session.windows[0].scroll < 0:
                     MB().session.windows[0].scroll = 0
             else:
-                super().onKey(key)
+                super(NormalMode, self).onKey(key)
         else:
             MB().session.bindings.reset()
             if callable(bindret):
@@ -252,7 +252,7 @@ class ConsoleMode(modes.Mode):
         if key == keys.KEY_ESC:
             MB().drain.put(event.ModeEvent("normal"))
         else:
-            super().onKey(key)
+            super(ConsoleMode, self).onKey(key)
 
 consoleMode = ConsoleMode()
 
@@ -267,7 +267,7 @@ class LuaMode(modes.BufferMode):
             self.clearBuffer()
             MB().drain.put(event.ModeEvent("normal"))
         else:
-            super().onKey(key)
+            super(LuaMode, self).onKey(key)
 
 luaMode = LuaMode()
 
@@ -276,13 +276,13 @@ class MapMode(modes.Mode):
         if key == keys.KEY_ESC:
             MB().drain.put(event.ModeEvent("normal"))
         else:
-            super().onKey(key)
+            super(MapMode, self).onKey(key)
 
 mapMode = MapMode()
 
 class PromptMode(modes.BufferMode):
     def __init__(self):
-        super().__init__()
+        super(PromptMode, self).__init__()
         self.call = None
         self.text = ""
 
@@ -305,6 +305,6 @@ class PromptMode(modes.BufferMode):
                 MB().drain.put(event.CallableEvent(self.call, self.getBuffer()))
             self.clearBuffer()
         else:
-            super().onKey(key)
+            super(PromptMode, self).onKey(key)
 
 promptMode = PromptMode()

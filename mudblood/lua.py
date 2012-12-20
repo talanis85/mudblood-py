@@ -42,7 +42,7 @@ class Lua(object):
         g.quit = self.session.quit
         g.mode = self.mode
         g.connect = self.connect
-        g.print = self.print
+        setattr(g, "print", self.echo)
         g.status = self.session.status
         g.send = self.send
         g.directSend = self.directSend
@@ -128,13 +128,13 @@ class Lua(object):
     def directSend(self, data):
         self.session.send(data)
 
-    def print(self, ob):
+    def echo(self, ob):
         if isinstance(ob, colors.AString):
-            self.session.print(ob)
-        elif isinstance(ob, str):
-            self.session.print(ansi.Ansi().parseToAString(ob))
+            self.session.echo(ob)
+        elif isinstance(ob, basestring):
+            self.session.echo(ansi.Ansi().parseToAString(ob))
         else:
-            self.session.print(colors.AString(str(ob)))
+            self.session.echo(colors.AString(str(ob)))
 
     def load(self, filename):
         with open(os.path.join(self.profilePath, filename), "r") as f:
@@ -193,7 +193,7 @@ class Lua_Path(LuaExposedObject):
 
 class Lua_Context(LuaExposedObject):
     def __init__(self, lua):
-        super().__init__(lua)
+        super(Lua_Context, self).__init__(lua)
 
         # Must be a pure lua function as we cannot yield across the Lua-Python boundary.
         self.wait = lua.eval("function (self, trigs) return triggers.yield(trigs, self.recvTriggers) end")
@@ -227,8 +227,8 @@ class Lua_RPCObject(LuaExposedObject):
         return None
 
     def __getattr__(self, key):
-        if hasattr(super(), key):
-            return getattr(super(), key)
+        if hasattr(super(Lua_RPCObject, self), key):
+            return getattr(super(Lua_RPCObject, self), key)
         else:
             return Lua_RPCObject(self._lua, self._port, self._stack + [key])
 
@@ -324,7 +324,7 @@ class Lua_Map(LuaExposedObject):
 
 class Lua_Map_Room(LuaExposedObject):
     def __init__(self, lua, rid):
-        super().__init__(lua)
+        super(Lua_Map_Room, self).__init__(lua)
         self._roomId = self._lua.session.map.findRoom(rid)
 
     def __str__(self):
@@ -332,7 +332,7 @@ class Lua_Map_Room(LuaExposedObject):
         return "Room #{} ({})".format(r.id, (r.tag or "no tag"))
 
     def getEdges(self):
-        return self._lua.lua.table(**dict([(e, Lua_Map_Edge(self._lua, self._roomId, e))
+        return self._lua.lua.table(**dict([(str(e), Lua_Map_Edge(self._lua, self._roomId, e))
                      for e in self._lua.session.map.rooms[self._roomId].getEdges()]))
 
     edges = property(getEdges)
@@ -388,7 +388,7 @@ class Lua_Map_Room(LuaExposedObject):
 
 class Lua_Map_Edge(LuaExposedObject):
     def __init__(self, lua, rid, edge):
-        super().__init__(lua)
+        super(Lua_Map_Edge, self).__init__(lua)
         self._roomId = rid
         self._edge = edge
         self._valid = True

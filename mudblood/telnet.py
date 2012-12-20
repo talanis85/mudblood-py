@@ -1,6 +1,5 @@
 import socket
 from mudblood import event
-from mudblood import lua
 
 IAC = 255
 WILL = 251
@@ -16,8 +15,8 @@ CMD_EOR = 239
 OPT_EOR = 25
 
 class TelnetEvent(event.Event):
-    def __init__(self, cmd, option, data=None):
-        super().__init__()
+    def __init__(self, cmd, option=None, data=None):
+        super(TelnetEvent, self).__init__()
         self.cmd = cmd
         self.option = option
         self.data = data
@@ -25,17 +24,32 @@ class TelnetEvent(event.Event):
     def __str__(self):
         return "TelnetEvent: cmd={} option={} data={}".format(self.cmd, self.option, self.data)
 
-class Telnet(event.AsyncSource):
-    def __init__(self, host, port):
-        super().__init__()
+class TCPSocket(object):
+    def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    def connect(self, host, port):
         self.socket.connect((host, port))
 
-    def poll(self):
-        ret = self.socket.recv(1024)
+    def read(self, size):
+        ret = self.socket.recv(size)
         if ret == b'':
+            return None
+        return ret
+
+    def write(self, string):
+        self.socket.send(string)
+
+class Telnet(event.AsyncSource):
+    def __init__(self, file):
+        super(Telnet, self).__init__()
+        self.file = file
+
+    def poll(self):
+        ret = self.file.read(1024)
+        if ret == None:
             self.running = False
-            return event.DisconnectEvent()
+            self.put(event.DisconnectEvent())
         else:
             parsed = bytearray()
             state = 0
@@ -43,21 +57,24 @@ class Telnet(event.AsyncSource):
             option = 0
             data = bytearray()
 
-            for c in ret:
+            for d in ret:
+                # Remove in Python 3
+                c = ord(d)
+
                 if state == 1:
                     if c >= 240:
                         command = c
                         state = 2
                     else:
                         command = c
-                        self.put(TelnetEvent(command, option, data))
+                        self.put(TelnetEvent(command, None, None))
                         state = 0
                 elif state == 2:
                     option = c
                     if command == SB:
                         state = 3
                     else:
-                        self.put(TelnetEvent(command, option, data))
+                        self.put(TelnetEvent(command, option, None))
                         state = 0
                 elif state == 3:
                     if c == IAC:
@@ -72,7 +89,8 @@ class Telnet(event.AsyncSource):
                         data.append(IAC)
                         data.append(c)
                 elif c == IAC:
-                    self.put(event.RawEvent(bytes(parsed)))
+                    if len(parsed) > 0:
+                        self.put(event.RawEvent(bytes(parsed)))
 
                     parsed = bytearray()
                     command = 0
@@ -85,17 +103,18 @@ class Telnet(event.AsyncSource):
                 elif c == 0x1b or c == ord("\n") or (c >= ord(" ") and c <= ord("~")):
                     parsed.append(c)
 
-            return event.RawEvent(bytes(parsed))
+            if len(parsed) > 0:
+                self.put(event.RawEvent(bytes(parsed)))
 
     def write(self, buf):
-        self.socket.send(buf)
+        self.file.write(buf)
 
     def sendIAC(self, command, option):
-        b = bytes([IAC, command, option])
+        b = bytearray([IAC, command, option])
         self.put(event.LogEvent("Telnet: Sending {}".format(b), "debug"))
-        self.socket.send(b)
+        self.file.write(b)
 
     def sendSubneg(self, option, data):
         b = bytes([IAC, SB, option]) + bytes(data) + bytes([IAC, SE])
         self.put(event.LogEvent("Telnet: Sending {}".format(b), "debug"))
-        self.socket.send(b)
+        self.file.write(b)

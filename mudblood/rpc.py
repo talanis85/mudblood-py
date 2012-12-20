@@ -1,5 +1,5 @@
 from mudblood import event
-import socketserver
+import SocketServer
 import asynchat
 import socket
 import os
@@ -7,12 +7,12 @@ import json
 
 class RPCEvent(event.Event):
     def __init__(self, literal=None, func="", args=[]):
-        super().__init__()
+        super(RPCEvent, self).__init__()
         self.literal = literal
         self.func = func
         self.args = args
 
-class RPCServerHandler(socketserver.StreamRequestHandler):
+class RPCServerHandler(SocketServer.StreamRequestHandler):
     def handle(self):
         data = self.rfile.read().decode('utf8')
         ob = json.loads(data)
@@ -29,9 +29,9 @@ class RPCServerSocket(event.AsyncSource):
         if os.path.exists(path):
             os.unlink(path)
 
-        self.server = socketserver.UnixStreamServer(path, RPCServerHandler)
+        self.server = SocketServer.UnixStreamServer(path, RPCServerHandler)
         self.server.rpc_source = self
-        super().__init__()
+        super(RPCServerSocket, self).__init__()
 
     def run(self):
         self.put(event.LogEvent("Started RPC Server on {}".format(self.path), "info"))
