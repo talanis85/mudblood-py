@@ -113,9 +113,9 @@ class TermboxScreen(screen.Screen):
                                 x += 8 - (x % 8)
                             else:
                                 if not (ord(c[1]) >= ord(" ") and ord(c[1]) <= ord("~")):
-                                    self.tb.close()
-                                    import pdb; pdb.set_trace()
-                                    raise Exception("Non printable char {}. Line is: '{}'".format(ord(c[1]), [ord(x[1]) for x in l]))
+                                    continue
+                                    #self.tb.close()
+                                    #raise Exception("Non printable char {}. Line is: '{}'".format(ord(c[1]), [ord(x[1]) for x in l]))
 
                                 self.tb.change_cell(x, y, ord(c[1]), c[0][0] | c[0][2], c[0][1])
                                 x += 1
@@ -240,7 +240,7 @@ class NormalMode(modes.BufferMode):
             MB().session.bindings.reset()
             if callable(bindret):
                 MB().drain.put(event.CallableEvent(bindret))
-            elif isinstance(bindret, str):
+            elif isinstance(bindret, basestring):
                 MB().drain.put(event.InputEvent(bindret))
             else:
                 MB().drain.put(event.LogEvent("Invalid binding.", "err"))

@@ -88,7 +88,7 @@ class Lua(object):
             raise KeyError()
 
     def hook(self, hook, *args):
-        return self.lua.globals().events.call(hook, *args)
+        return self.lua.globals().events.call(hook, self.lua.table(*args))
 
     def triggerSend(self, line):
         g = self.lua.globals()

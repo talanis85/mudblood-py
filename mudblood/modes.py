@@ -49,7 +49,7 @@ class BufferMode(Mode):
             self.history(-1)
         elif key == keys.KEY_ARROW_DOWN:
             self.history(1)
-        else:
+        elif key <= 127:
             self._buffer = self._buffer[:self._cursor] + chr(key) + self._buffer[self._cursor:]
             self._cursor += 1
 

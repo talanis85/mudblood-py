@@ -124,6 +124,9 @@ class KeyEvent(Event):
         super(KeyEvent, self).__init__()
         self.key = key
 
+    def __repr__(self):
+        return "KeyEvent: 0x{:x}".format(self.key)
+
 class ResizeEvent(Event):
     """
     Signals that the screen size has changed.

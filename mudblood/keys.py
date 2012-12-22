@@ -117,10 +117,12 @@ class Bindings(object):
                 pref = True
                 if self.keybuffer[i] != k[i]:
                     pref = False
-                if not pref:
-                    continue
+                    break
             if pref:
                 break
+
+        if not pref:
+            self.keybuffer = []
 
         return pref
 

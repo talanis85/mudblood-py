@@ -111,10 +111,10 @@ class Telnet(event.AsyncSource):
 
     def sendIAC(self, command, option):
         b = bytearray([IAC, command, option])
-        self.put(event.LogEvent("Telnet: Sending {}".format(b), "debug"))
+        self.put(event.LogEvent("Telnet: Sending {}".format(list(b)), "debug"))
         self.file.write(b)
 
     def sendSubneg(self, option, data):
         b = bytes([IAC, SB, option]) + bytes(data) + bytes([IAC, SE])
-        self.put(event.LogEvent("Telnet: Sending {}".format(b), "debug"))
+        self.put(event.LogEvent("Telnet: Sending {}".format(list(b)), "debug"))
         self.file.write(b)

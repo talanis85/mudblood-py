@@ -1,5 +1,9 @@
 mainMB = None
 
+#def main():
+#    import cProfile
+#    cProfile.runctx("main2()", globals(), locals())
+
 def main():
     import sys
 
@@ -13,7 +17,7 @@ def main():
         config['script'] = sys.argv[1]
 
     global mainMB
-    mainMB = Mudblood("termbox");
+    mainMB = Mudblood("termbox")
     mainMB.run(config)
 
 def MB():
@@ -106,7 +110,9 @@ class Mudblood(object):
         self.screen.destroy()
 
     def event(self, ev):
-        self.log(str(ev), "debug3")
+        #if not isinstance(ev, event.RawEvent):
+        #    self.log(str(ev), "debug3")
+
         if isinstance(ev, event.LogEvent):
             self.log(ev.msg, ev.level)
         elif isinstance(ev, event.KeyEvent):
