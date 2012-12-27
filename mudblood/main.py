@@ -33,19 +33,7 @@ from mudblood import session
 from mudblood import linebuffer
 from mudblood import window
 
-#class Singleton(type):
-#    def __init__(cls, name, bases, dict):
-#        super(Singleton, cls).__init__(name, bases, dict)
-#        cls.instance = None 
-#
-#    def __call__(cls,*args,**kw):
-#        if cls.instance is None:
-#            cls.instance = super(Singleton, cls).__call__(*args, **kw)
-#        return cls.instance
-
 class Mudblood(object):
-    #__metaclass__ = Singleton
-
     def __init__(self, screenType):
         self.session = None
         self.drain = event.Drain()
@@ -61,6 +49,8 @@ class Mudblood(object):
         elif self.screenType == "debug":
             import mudblood.screen.debug
             self.screen = mudblood.screen.debug.DebugScreen()
+
+        self.screen.start()
 
         # Initialize session
         try:
@@ -81,7 +71,7 @@ class Mudblood(object):
         self.session.bind(self.drain)
         self.session.start()
 
-        self.screen.update()
+        self.screen.updateScreen()
 
         doQuit = False
         while not doQuit:
@@ -103,7 +93,7 @@ class Mudblood(object):
                     self.event(ev)
 
             self.session.lua.triggerTime()
-            self.screen.update()
+            self.screen.updateScreen()
 
             # TODO: multiple sessions
             
@@ -116,24 +106,18 @@ class Mudblood(object):
         if isinstance(ev, event.LogEvent):
             self.log(ev.msg, ev.level)
         elif isinstance(ev, event.KeyEvent):
-            self.screen.keyEvent(ev.key)
+            self.screen.key(ev.key)
         elif isinstance(ev, event.ResizeEvent):
-            #self.log("Window Resize ({}x{})".format(ev.w, ev.h), "debug")
-            #self.screen.updateSize()
             self.screen.updateSize(ev.w, ev.h)
-            #self.screen.updateSize(10, 10)
         elif isinstance(ev, event.ModeEvent):
-            #self.log("Changed mode to {} ({})".format(ev.mode, ev.args), "debug")
-            self.screen.modeManager.setMode(ev.mode, **ev.args)
+            self.screen.setMode(ev.mode, **ev.args)
         elif isinstance(ev, event.CallableEvent):
             try:
                 ev.call(*ev.args)
             except Exception as e:
                 self.log(str(e), "err")
         else:
-            #t = time.clock()
             self.session.event(ev)
-            #self.log("{} took time {}".format(str(ev), time.clock() - t))
 
     def log(self, msg, level="debug"):
         if level == "debug3":

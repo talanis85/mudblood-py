@@ -35,6 +35,8 @@ class TermboxSource(event.AsyncSource):
 
 class TermboxScreen(screen.Screen):
     def __init__(self):
+        super(TermboxScreen, self).__init__()
+
         # Initialize Termbox
         self.tb = termbox.Termbox()
         self.tb.set_clear_attributes(termbox.DEFAULT, termbox.DEFAULT)
@@ -58,16 +60,25 @@ class TermboxScreen(screen.Screen):
             "prompt": promptMode,
             })
     
-    def destroy(self):
-        self.tb.close()
+    def run(self):
+        while True:
+            ev = self.nextEvent()
 
-    def updateSize(self, w, h):
-        self.width = w
-        self.height = h
-        #self.width = self.tb.width()
-        #self.height = self.tb.height()
+            if isinstance(ev, screen.UpdateScreenEvent):
+                self.doUpdate()
+            elif isinstance(ev, screen.SizeScreenEvent):
+                self.width, self.height = ev.w, ev.h
+            elif isinstance(ev, screen.DestroyScreenEvent):
+                self.tb.close()
+                break
+            elif isinstance(ev, screen.ModeScreenEvent):
+                self.modeManager.setMode(ev.mode, **ev.args)
+            elif isinstance(ev, screen.KeyScreenEvent):
+                self.modeManager.key(ev.key)
+            else:
+                raise Exception("Invalid Event")
 
-    def update(self):
+    def doUpdate(self):
         x = 0
         y = 0
 
@@ -178,13 +189,6 @@ class TermboxScreen(screen.Screen):
             x += 1
         
         self.tb.present()
-
-    def keyEvent(self, key):
-        if key == keys.KEY_CTRL_C:
-            self.tb.close()
-            raise KeyboardInterrupt()
-
-        self.modeManager.key(key)
 
     def editor(self, content):
         ret = None
