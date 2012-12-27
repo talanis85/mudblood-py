@@ -326,29 +326,54 @@ class Lua_Map_Room(LuaExposedObject):
     def __init__(self, lua, rid):
         super(Lua_Map_Room, self).__init__(lua)
         self._roomId = self._lua.session.map.findRoom(rid)
+        self._valid = True
 
     def __str__(self):
+        self._checkValid()
         r = self._lua.session.map.rooms[self._roomId]
         return "Room #{} ({})".format(r.id, (r.tag or "no tag"))
 
+    def _checkValid(self):
+        if not self._valid:
+            self._lua.error("Room '{}' is no longer valid.".format(self._roomId))
+
+    def getId(self):
+        return self._roomId
+
+    id = property(getId)
+
     def getEdges(self):
+        self._checkValid()
         return self._lua.lua.table(**dict([(str(e), Lua_Map_Edge(self._lua, self._roomId, e))
                      for e in self._lua.session.map.rooms[self._roomId].getEdges()]))
 
     edges = property(getEdges)
 
+    def delete(self):
+        self._checkValid()
+        for e in self.edges:
+            e.delete(True)
+
+        del self._lua.session.map.rooms[self._roomId]
+        self._valid = False
+
     def getUserdata(self, key):
+        self._checkValid()
         return self._lua.session.map.rooms[self._roomId].userdata.get(key)
     def setUserdata(self, key, value):
+        self._checkValid()
         self._lua.session.map.rooms[self._roomId].userdata[key] = value
 
     def getTag(self):
+        self._checkValid()
         return self._lua.session.map.rooms[self._roomId].tag
     def setTag(self, tag):
+        self._checkValid()
         self._lua.session.map.rooms[self._roomId].tag = tag
     tag = property(getTag, setTag)
 
     def connect(self, other, name, opposite=None):
+        self._checkValid()
         if name in self._lua.session.map.rooms[self._roomId].edges:
             self._lua.error("Edge '{}' already present in {}".format(name, str(self)))
         if opposite and opposite in self._lua.session.map.rooms[other._roomId].edges:
@@ -361,24 +386,27 @@ class Lua_Map_Room(LuaExposedObject):
             self._lua.session.map.rooms[other._roomId].edges[opposite] = e2
 
     def findNeighbor(self, d):
-        neighbor = None
+        self._checkValid()
+        self.neighbor = None
         dx, dy = map.getDirectionDelta(self._lua.session.map.dirConfig[d])
 
         def dfs_callback(r):
             if self._lua.session.map.rooms[self._roomId].x + dx == r.x and self._lua.session.map.rooms[self._roomId].y + dy == r.y:
-                neighbor = r
+                self.neighbor = r
 
         self._lua.session.map.dfs(self._lua.session.map.rooms[self._roomId], dfs_callback)
-        if neighbor:
-            return Lua_Map_Room(self._lua, neighbor.id)
+        if self.neighbor:
+            return Lua_Map_Room(self._lua, self.neighbor.id)
         else:
             return None
 
     def fly(self):
+        self._checkValid()
         self._lua.session.map.goto(self._roomId)
         self._lua.hook("room")
 
     def getPath(self, to, weightFunction=None):
+        self._checkValid()
         if weightFunction:
             def wf(r, d):
                 return weightFunction(Lua_Map_Room(self._lua, r), Lua_Map_Edge(self._lua, r, d))
