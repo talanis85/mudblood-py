@@ -308,6 +308,17 @@ class AsciiMapRenderer(MapRenderer):
 
         self.renderRoom(self.map.rooms[self.map.currentRoom], int(w/2), int(h/2), w, h)
 
+        x = 1
+        y = 1
+        for e in self.map.rooms[self.map.currentRoom].getEdges():
+            if y >= h:
+                break
+            for c in str(e):
+                self.out[y*w+x] = c
+                x += 1
+            x = 1
+            y += 1
+
         return self.out
 
     def renderRoom(self, r, x, y, w, h):
