@@ -17,7 +17,7 @@ def main():
         config['script'] = sys.argv[1]
 
     global mainMB
-    mainMB = Mudblood("termbox")
+    mainMB = Mudblood("serial")
     mainMB.run(config)
 
 def MB():
@@ -46,9 +46,12 @@ class Mudblood(object):
         if self.screenType == "termbox":
             import mudblood.screen.tbscreen
             self.screen = mudblood.screen.tbscreen.TermboxScreen()
-        elif self.screenType == "debug":
-            import mudblood.screen.debug
-            self.screen = mudblood.screen.debug.DebugScreen()
+        elif self.screenType == "serial":
+            import mudblood.screen.serial
+            self.screen = mudblood.screen.serial.SerialScreen()
+        elif self.screenType == "pygame":
+            import mudblood.screen.pgscreen
+            self.screen = mudblood.screen.pgscreen.PygameScreen()
 
         self.screen.start()
 
@@ -95,9 +98,12 @@ class Mudblood(object):
             self.session.lua.triggerTime()
             self.screen.updateScreen()
 
+            self.screen.tick()
+
             # TODO: multiple sessions
             
         self.screen.destroy()
+        self.screen.join()
 
     def event(self, ev):
         #if not isinstance(ev, event.RawEvent):
@@ -107,6 +113,8 @@ class Mudblood(object):
             self.log(ev.msg, ev.level)
         elif isinstance(ev, event.KeyEvent):
             self.screen.key(ev.key)
+        elif isinstance(ev, event.KeystringEvent):
+            self.screen.keystring(ev.keystring)
         elif isinstance(ev, event.ResizeEvent):
             self.screen.updateSize(ev.w, ev.h)
         elif isinstance(ev, event.ModeEvent):

@@ -21,6 +21,10 @@ class KeyScreenEvent(ScreenEvent):
     def __init__(self, key):
         self.key = key
 
+class KeystringScreenEvent(ScreenEvent):
+    def __init__(self, keystring):
+        self.keystring = keystring
+
 class DestroyScreenEvent(ScreenEvent):
     pass
 
@@ -35,8 +39,20 @@ class Screen(event.Source):
     def run(self):
         pass
 
-    def nextEvent(self):
-        return self.queue.get()
+    def tick(self):
+        pass
+
+    def nextEvent(self, timeout=0):
+        try:
+            return self.queue.get()
+        except Queue.Empty:
+            return None
+
+    def doneEvent(self):
+        self.queue.task_done()
+
+    def join(self):
+        self.queue.join()
 
     def destroy(self):
         self.queue.put(DestroyScreenEvent())
@@ -52,3 +68,6 @@ class Screen(event.Source):
 
     def key(self, key):
         self.queue.put(KeyScreenEvent(key))
+
+    def keystring(self, keystring):
+        self.queue.put(KeystringScreenEvent(keystring))

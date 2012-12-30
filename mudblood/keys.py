@@ -100,6 +100,9 @@ class Bindings(object):
     def reset(self):
         self.keybuffer = []
 
+    def getBinding(self, keys):
+        return self.bindings.get(tuple(keys))
+
     def key(self, key):
         """
         Returns:

@@ -92,7 +92,8 @@ class Session(event.Source):
             self.telnet = None
 
         elif isinstance(ev, event.InputEvent):
-            self.echo(self.getPromptLine() + colors.AString(ev.text).fg(colors.YELLOW))
+            if ev.display:
+                self.echo(self.getPromptLine() + colors.AString(ev.text).fg(colors.YELLOW))
             self.lastLine = ""
 
             self.processInput(ev.text)

@@ -127,6 +127,18 @@ class KeyEvent(Event):
     def __repr__(self):
         return "KeyEvent: 0x{:x}".format(self.key)
 
+class KeystringEvent(Event):
+    """
+    Signals that a line of input was received.
+    Emitted by: Screen
+    """
+    def __init__(self, keystring):
+        super(KeystringEvent, self).__init__()
+        self.keystring = keystring
+
+    def __repr__(self):
+        return "KeystringEvent: {}".format(self.keystring)
+
 class ResizeEvent(Event):
     """
     Signals that the screen size has changed.
@@ -164,10 +176,10 @@ class InputEvent(Event):
     A line of input was made or the lua function send() was called.
     Emitted by: Session, Screen
     """
-    def __init__(self, text):
+    def __init__(self, text, display=True):
         super(InputEvent, self).__init__()
         self.text = text
-        self.display = True
+        self.display = display
 
 class CallableEvent(Event):
     """
