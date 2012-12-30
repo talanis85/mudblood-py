@@ -46,6 +46,21 @@ class FSM(object):
         else:
             return True
 
+def astringToAnsi(astring):
+    ret = ""
+    curattr = None
+
+    for c in astring:
+        if curattr != c[0]:
+            curattr = c[0]
+            ret += "\x1b[{};{}m".format(curattr[0] + 30, curattr[1] + 40)
+        ret += c[1]
+
+    if curattr is not None:
+        ret += "\x1b[0m"
+
+    return ret
+
 # TODO: React to [CSI (0) c] with [CSI 60;22;c]
 class Ansi(FSM):
     def __init__(self):
