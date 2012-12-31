@@ -17,7 +17,7 @@ def main():
         config['script'] = sys.argv[1]
 
     global mainMB
-    mainMB = Mudblood("tty")
+    mainMB = Mudblood("termbox")
     mainMB.run(config)
 
 def MB():
