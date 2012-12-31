@@ -81,14 +81,16 @@ class Mudblood(object):
 
         doQuit = False
         while not doQuit:
-            # Process all pending events, then update screen
+            needUpdate = False
 
+            # Process all pending events, then update screen
             ev = self.drain.get(True, 1)
             if ev:
                 if isinstance(ev, event.QuitEvent):
                     doQuit = True
                 else:
                     self.event(ev)
+                    needUpdate = True
             while True:
                 ev = self.drain.get(False)
                 if ev is None:
@@ -97,9 +99,12 @@ class Mudblood(object):
                     doQuit = True
                 else:
                     self.event(ev)
+                    needUpdate = True
 
             self.session.lua.triggerTime()
-            self.screen.updateScreen()
+
+            if needUpdate:
+                self.screen.updateScreen()
 
             self.screen.tick()
 
