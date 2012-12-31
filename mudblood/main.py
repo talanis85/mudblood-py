@@ -17,7 +17,7 @@ def main():
         config['script'] = sys.argv[1]
 
     global mainMB
-    mainMB = Mudblood("serial")
+    mainMB = Mudblood("tty")
     mainMB.run(config)
 
 def MB():
@@ -52,6 +52,9 @@ class Mudblood(object):
         elif self.screenType == "pygame":
             import mudblood.screen.pgscreen
             self.screen = mudblood.screen.pgscreen.PygameScreen()
+        elif self.screenType == "tty":
+            import mudblood.screen.ttyscreen
+            self.screen = mudblood.screen.ttyscreen.TtyScreen()
 
         self.screen.start()
 
