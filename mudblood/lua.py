@@ -33,7 +33,7 @@ class Lua(object):
         self.lua.execute("triggers = require 'triggers'")
         self.lua.execute("mapper = require 'mapper'")
 
-        self.lua.execute("require 'aux'")
+        self.lua.execute("require 'common'")
 
         g.ctxGlobal = Lua_Context(self)
         g.ctxRoom = Lua_Context(self)
