@@ -1,32 +1,31 @@
+import sys
+import os
+import time
+import argparse
+
 mainMB = None
 
-#def main():
-#    import cProfile
-#    cProfile.runctx("main2()", globals(), locals())
-
 def main():
-    import sys
-
     from mudblood.main import Mudblood
 
+    parser = argparse.ArgumentParser(description="Mudblood MUD client")
+    parser.add_argument("-i", metavar="interface", action='store',
+            choices=['termbox', 'pygame', 'serial', 'tty'],
+            default='termbox', help="The interface to use (default: termbox)")
+    parser.add_argument("script", action='store', nargs='?',
+            help="The main script")
+    options = parser.parse_args()
+
     config = {
-            "script": None
+            "script": options.script
             }
 
-    if len(sys.argv) > 1:
-        config['script'] = sys.argv[1]
-
     global mainMB
-    mainMB = Mudblood("termbox")
+    mainMB = Mudblood(options.i)
     mainMB.run(config)
 
 def MB():
     return mainMB
-
-import sys
-import os
-
-import time
 
 from mudblood import event
 from mudblood import session
