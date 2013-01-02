@@ -24,7 +24,9 @@ class Lua(object):
     def luaInit(self):
         self.lua = lupa.LuaRuntime()
 
-        self.lua.execute("package.path = '{}'".format(self.packagePath))
+        g = self.lua.globals()
+
+        g.package.path = self.packagePath
 
         self.lua.execute("colors = require 'colors'")
         self.lua.execute("events = require 'events'")
@@ -32,8 +34,6 @@ class Lua(object):
         self.lua.execute("mapper = require 'mapper'")
 
         self.lua.execute("require 'aux'")
-
-        g = self.lua.globals()
 
         g.ctxGlobal = Lua_Context(self)
         g.ctxRoom = Lua_Context(self)
