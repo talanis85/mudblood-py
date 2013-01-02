@@ -1,4 +1,53 @@
-terminfo = {
+import sys
+import tty
+import termios
+
+class Terminal(object):
+    def __init__(self, name):
+        self.name = name
+        self.terminfo = Terminfo(name)
+        self.oldsettings = None
+
+    def setup(self):
+        self.oldsettings = termios.tcgetattr(sys.stdin)
+        tty.setcbreak(sys.stdin.fileno())
+
+    def reset(self):
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.oldsettings)
+
+    def write(self, data):
+        sys.stdout.write(data)
+
+    def read(self, count):
+        return sys.stdin.read(count)
+
+    def flush(self):
+        sys.stdout.flush()
+
+    def _dofunc(self, func):
+        sys.stdout.write(self.terminfo.function(func))
+        sys.stdout.flush()
+
+    def enter_keypad(self):
+        self._dofunc('ENTER_KEYPAD')
+
+    def exit_keypad(self):
+        self._dofunc('EXIT_KEYPAD')
+
+    def erase_line(self):
+        self._dofunc('ERASE_LINE')
+
+class Terminfo(object):
+    def __init__(self, name):
+        self.name = name
+
+    def function(self, name):
+        return self.terminfo[self.name]['functions'][name]
+
+    def keys(self):
+        return self.terminfo[self.name]['keys']
+
+    terminfo = {
         'Eterm': (
             ["\033[11~","\033[12~","\033[13~","\033[14~","\033[15~","\033[17~","\033[18~","\033[19~","\033[20~","\033[21~","\033[23~","\033[24~","\033[2~","\033[3~","\033[7~","\033[8~","\033[5~","\033[6~","\033[A","\033[B","\033[D","\033[C", 0],
             {
@@ -29,7 +78,7 @@ terminfo = {
                 'ENTER_KEYPAD': "\033[?1h\033=",
                 'EXIT_KEYPAD': "\033[?1l\033>",
             }),
-	    'xterm': {
+        'xterm': {
             'keys': {
                 'F1': "\033OP",
                 'F2': "\033OQ",
@@ -66,8 +115,9 @@ terminfo = {
                 'BLINK': "\033[5m",
                 'ENTER_KEYPAD': "\033[?1h\033=",
                 'EXIT_KEYPAD': "\033[?1l\033>",
+                'ERASE_LINE': "\033[2K",
             }},
-	    'rxvt-unicode': (
+        'rxvt-unicode': (
             ["\033[11~","\033[12~","\033[13~","\033[14~","\033[15~","\033[17~","\033[18~","\033[19~","\033[20~","\033[21~","\033[23~","\033[24~","\033[2~","\033[3~","\033[7~","\033[8~","\033[5~","\033[6~","\033[A","\033[B","\033[D","\033[C", 0],
             {
                 'ENTER_CA': "\033[?1049h",
@@ -82,7 +132,7 @@ terminfo = {
                 'ENTER_KEYPAD': "\033=",
                 'EXIT_KEYPAD': "\033>",
             }),
-	    'linux': (
+        'linux': (
             ["\033[[A","\033[[B","\033[[C","\033[[D","\033[[E","\033[17~","\033[18~","\033[19~","\033[20~","\033[21~","\033[23~","\033[24~","\033[2~","\033[3~","\033[1~","\033[4~","\033[5~","\033[6~","\033[A","\033[B","\033[D","\033[C", 0],
             {
                 'ENTER_CA': "",
@@ -97,7 +147,7 @@ terminfo = {
                 'ENTER_KEYPAD': "",
                 'EXIT_KEYPAD': "",
             }),
-	    'rxvt-256color': (
+        'rxvt-256color': (
             ["\033[11~","\033[12~","\033[13~","\033[14~","\033[15~","\033[17~","\033[18~","\033[19~","\033[20~","\033[21~","\033[23~","\033[24~","\033[2~","\033[3~","\033[7~","\033[8~","\033[5~","\033[6~","\033[A","\033[B","\033[D","\033[C", 0],
             {
                 'ENTER_CA': "\0337\033[?47h",
