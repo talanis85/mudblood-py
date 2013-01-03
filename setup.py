@@ -6,6 +6,7 @@ py2exe = None
 try:
     import py2exe as p2e
     py2exe = p2e
+    sys.path.append("C:\\Programme\\Microsoft Visual Studio 9.0\\VC\\redist\\x86\\Microsoft.VC90.CRT")
 except:
     pass
 
