@@ -1,8 +1,6 @@
 import os
 import traceback
 
-from pkg_resources import Requirement, resource_filename
-
 from mudblood import lua
 from mudblood import event
 from mudblood import linebuffer
@@ -13,6 +11,7 @@ from mudblood import telnet
 from mudblood import keys
 from mudblood import map
 from mudblood import rpc
+from mudblood import package
 
 class Session(event.Source):
     """
@@ -22,7 +21,7 @@ class Session(event.Source):
     def __init__(self, script=None):
         super(Session, self).__init__()
 
-        self.lua = lua.Lua(self, os.path.join(resource_filename(Requirement.parse("mudblood"), "mudblood/lua"), "?.lua"))
+        self.lua = lua.Lua(self, package.getResourceFilename("lua", "?.lua"))
 
         self.lb = linebuffer.Linebuffer()
         self.bindings = keys.Bindings()
@@ -42,7 +41,7 @@ class Session(event.Source):
         if self.script:
             self.log("Loading {}".format(self.script), "info")
             try:
-                self.lua.loadFile(self.script + "/profile.lua")
+                self.lua.loadFile(os.path.join(self.script, "profile.lua"))
             except Exception as e:
                 self.log("Lua error: {}\n{}".format(str(e), traceback.format_exc()), "err")
 

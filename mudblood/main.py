@@ -59,7 +59,7 @@ class Mudblood(object):
 
         # Initialize session
         try:
-            os.chdir(os.path.join(os.environ['HOME'], ".config/mudblood-py"))
+            os.chdir(os.path.join(os.environ['HOME'], ".config", "mudblood-py"))
         except:
             self.log("Creating ~/.config/mudblood-py", "info")
             try:
@@ -67,8 +67,8 @@ class Mudblood(object):
                     os.mkdir(os.path.join(os.environ['HOME'], ".config"))
                 except OSError:
                     pass
-                os.mkdir(os.path.join(os.environ['HOME'], ".config/mudblood-py"))
-                os.chdir(os.path.join(os.environ['HOME'], ".config/mudblood-py"))
+                os.mkdir(os.path.join(os.environ['HOME'], ".config", "mudblood-py"))
+                os.chdir(os.path.join(os.environ['HOME'], ".config", "mudblood-py"))
             except:
                 raise Exception("Could not create configuration directory.")
 
