@@ -24,6 +24,7 @@ if "py2exe" in sys.argv:
     sys.path.append("C:\\Program Files\\Microsoft Visual Studio 9.0\\VC\\redist\\x86\\Microsoft.VC90.CRT")
 
     includes = []
+    excludes = []
 
     print("Using py2exe...")
 
@@ -36,12 +37,19 @@ if "py2exe" in sys.argv:
         py2exe.build_exe.isSystemDLL = isSystemDLL
 
         includes.append('pygame.font')
+
+    if 'pygame' not in features:
+        excludes.append('pygame')
+    if 'termbox' not in features:
+        excludes.append('termbox')
+    if 'wx' not in features:
+        excludes.append('wx')
      
     setup(
         install_requires = ['lupa >= 0.20'],
         packages = ['mudblood'],
         data_files = [('lua', glob.glob('mudblood/lua/*.lua'))],
-        options = {'py2exe': {'bundle_files': 1, 'includes': includes}},
+        options = {'py2exe': {'bundle_files': 1, 'includes': includes, 'excludes': excludes}},
         console = [{'script': "mudblood/main.py", 'dest_base': "mudblood-console"}],
         windows = [{'script': "mudblood/main.py", 'dest_base': "mudblood"}],
         zipfile = None,

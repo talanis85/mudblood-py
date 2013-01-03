@@ -13,6 +13,9 @@ DestroyEvent, EVT_DESTROY_EVENT = wx.lib.newevent.NewEvent()
 UpdateEvent, EVT_UPDATE_EVENT = wx.lib.newevent.NewEvent()
 ModeEvent, EVT_MODE_EVENT = wx.lib.newevent.NewEvent()
 
+def createScreen(master):
+    return WxScreen(master)
+
 class WxScreen(modalscreen.ModalScreen):
     def __init__(self, master):
         super(WxScreen, self).__init__(master)

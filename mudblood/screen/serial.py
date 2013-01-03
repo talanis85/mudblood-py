@@ -6,6 +6,9 @@ from mudblood import keys
 from mudblood import modes
 from mudblood import ansi
 
+def createScreen(master):
+    return SerialScreen(master)
+
 class SerialSource(event.AsyncSource):
     def __init__(self):
         super(SerialSource, self).__init__()

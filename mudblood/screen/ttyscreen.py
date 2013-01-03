@@ -11,6 +11,9 @@ from mudblood.screen import modalscreen
 
 from mudblood.screen import term
 
+def createScreen(master):
+    return TtyScreen(master)
+
 class TtySource(event.AsyncSource):
     def __init__(self, term):
         super(TtySource, self).__init__()
@@ -36,8 +39,8 @@ class TtySource(event.AsyncSource):
         return event.KeyEvent(ord(c))
 
 class TtyScreen(modalscreen.ModalScreen):
-    def __init__(self):
-        super(TtyScreen, self).__init__()
+    def __init__(self, master):
+        super(TtyScreen, self).__init__(master)
 
         self.nlines = 0
         self.lastPromptLen = 0

@@ -13,6 +13,9 @@ import tempfile
 
 termbox.DEFAULT = 0x09
 
+def createScreen(master):
+    return TermboxScreen(master)
+
 class TermboxSource(event.AsyncSource):
     def __init__(self, tb):
         self.tb = tb

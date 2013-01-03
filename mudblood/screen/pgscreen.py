@@ -9,6 +9,9 @@ from mudblood import keys
 from mudblood import modes
 from mudblood.screen import modalscreen
 
+def createScreen(master):
+    return PygameScreen(master)
+
 class PygameSource(event.AsyncSource):
     def __init__(self):
         super(PygameSource, self).__init__()

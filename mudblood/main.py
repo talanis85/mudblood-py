@@ -8,8 +8,8 @@ def main():
 
     parser = argparse.ArgumentParser(description="Mudblood MUD client")
     parser.add_argument("-i", metavar="interface", action='store',
-            choices=['termbox', 'pygame', 'serial', 'tty', 'tk', 'wx'],
-            default='termbox', help="The interface to use (default: termbox)")
+            choices=['tbscreen', 'pgscreen', 'serial', 'ttyscreen', 'tkscreen', 'wxscreen'],
+            default='tbscreen', help="The interface to use (default: termbox)")
     parser.add_argument("script", action='store', nargs='?',
             help="The main script")
     options = parser.parse_args()
@@ -35,24 +35,8 @@ class Mudblood(object):
         self.path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
     def run(self, config):
-        if self.screenType == "termbox":
-            import mudblood.screen.tbscreen
-            self.screen = mudblood.screen.tbscreen.TermboxScreen(self)
-        elif self.screenType == "serial":
-            import mudblood.screen.serial
-            self.screen = mudblood.screen.serial.SerialScreen(self)
-        elif self.screenType == "pygame":
-            import mudblood.screen.pgscreen
-            self.screen = mudblood.screen.pgscreen.PygameScreen(self)
-        elif self.screenType == "tty":
-            import mudblood.screen.ttyscreen
-            self.screen = mudblood.screen.ttyscreen.TtyScreen(self)
-        elif self.screenType == "tk":
-            import mudblood.screen.tkscreen
-            self.screen = mudblood.screen.tkscreen.TkScreen(self)
-        elif self.screenType == "wx":
-            import mudblood.screen.wxscreen
-            self.screen = mudblood.screen.wxscreen.WxScreen(self)
+        screenModule = getattr(__import__('mudblood.screen.'+self.screenType, globals(), locals(), [], -1).screen, self.screenType)
+        self.screen = screenModule.createScreen(self)
 
         self.screen.bind(self.drain)
         self.screen.start()
