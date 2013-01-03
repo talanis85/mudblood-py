@@ -51,9 +51,13 @@ if "py2exe" in sys.argv:
     setup(
         cmdclass = {'py2exe': p2e},
         install_requires = ['lupa >= 0.20'],
-        packages = ['mudblood', 'mudblood.screen'],
+        packages = ['mudblood'],
+        includes = ['pygame.font'],
         data_files = [('lua', glob.glob('mudblood/lua/*.lua'))],
-        console = ['mudblood/main.py'],
+        #console = ['mudblood/main.py'],
+        options = {'py2exe': {'bundle_files': 1}},
+        windows = {{'script': "mudblood/main.py"}},
+        zipfile = None,
         **configuration
     )
 else:
