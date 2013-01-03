@@ -16,6 +16,9 @@ class ModeManager(object):
     def key(self, key):
         self._modes[self._currentMode].onKey(key)
 
+    def getModeObject(self):
+        return self._modes[self._currentMode]
+
 class Mode(object):
     def onEnter(self):
         pass

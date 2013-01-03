@@ -10,7 +10,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Mudblood MUD client")
     parser.add_argument("-i", metavar="interface", action='store',
-            choices=['termbox', 'pygame', 'serial', 'tty'],
+            choices=['termbox', 'pygame', 'serial', 'tty', 'tk', 'wx'],
             default='termbox', help="The interface to use (default: termbox)")
     parser.add_argument("script", action='store', nargs='?',
             help="The main script")
@@ -54,6 +54,12 @@ class Mudblood(object):
         elif self.screenType == "tty":
             import mudblood.screen.ttyscreen
             self.screen = mudblood.screen.ttyscreen.TtyScreen()
+        elif self.screenType == "tk":
+            import mudblood.screen.tkscreen
+            self.screen = mudblood.screen.tkscreen.TkScreen()
+        elif self.screenType == "wx":
+            import mudblood.screen.wxscreen
+            self.screen = mudblood.screen.wxscreen.WxScreen()
 
         self.screen.start()
 
