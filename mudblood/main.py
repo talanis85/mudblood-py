@@ -150,3 +150,5 @@ class Mudblood(object):
             self.screen.log("-- ERROR: " + msg)
         else:
             self.screen.log("-- CRITICAL: " + msg)
+
+main()
