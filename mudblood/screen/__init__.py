@@ -29,9 +29,12 @@ class DestroyScreenEvent(ScreenEvent):
     pass
 
 class Screen(event.Source):
-    def __init__(self):
+    def __init__(self, master):
+        super(Screen, self).__init__()
+
         self.thread = threading.Thread(target=self.run)
         self.queue = Queue.Queue()
+        self.master = master
 
     def start(self):
         self.thread.start()

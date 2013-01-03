@@ -14,8 +14,6 @@ from mudblood import keys
 from mudblood import map
 from mudblood import rpc
 
-from mudblood.main import MB
-
 class Session(event.Source):
     """
     A session is one single connection to a server. Every session has its own socket,

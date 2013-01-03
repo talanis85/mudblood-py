@@ -18,8 +18,8 @@ class SerialSource(event.AsyncSource):
         return event.KeystringEvent([ord(c) for c in text])
 
 class SerialScreen(screen.Screen):
-    def __init__(self):
-        super(SerialScreen, self).__init__()
+    def __init__(self, master):
+        super(SerialScreen, self).__init__(master)
 
         self.nlines = 0
 
@@ -29,7 +29,7 @@ class SerialScreen(screen.Screen):
         # Create a source for user input
         self.source = SerialSource()
         self.source.start()
-        self.source.bind(MB().drain)
+        self.source.bind(self.master.drain)
 
     def run(self):
         while True:
@@ -54,30 +54,30 @@ class SerialScreen(screen.Screen):
                     sys.stdout.flush()
             elif isinstance(ev, screen.KeystringScreenEvent):
                 if self.mode == "normal":
-                    bindret = MB().session.bindings.getBinding(ev.keystring)
+                    bindret = self.master.session.bindings.getBinding(ev.keystring)
                     if bindret:
                         if callable(bindret):
-                            MB().drain.put(event.CallableEvent(bindret))
+                            self.put(event.CallableEvent(bindret))
                         elif isinstance(bindret, basestring):
-                            MB().drain.put(event.InputEvent(bindret))
+                            self.put(event.InputEvent(bindret))
                         else:
-                            MB().drain.put(event.LogEvent("Invalid binding.", "err"))
+                            self.put(event.LogEvent("Invalid binding.", "err"))
                     else:
-                        MB().drain.put(event.InputEvent("".join([chr(c) for c in ev.keystring]), display=False))
+                        self.master.drain.put(event.InputEvent("".join([chr(c) for c in ev.keystring]), display=False))
                 elif self.mode == "prompt":
-                    MB().drain.put(event.ModeEvent("normal"))
-                    MB().drain.put(event.CallableEvent(self.prompt_call, "".join([chr(c) for c in ev.keystring])))
+                    self.put(event.ModeEvent("normal"))
+                    self.put(event.CallableEvent(self.prompt_call, "".join([chr(c) for c in ev.keystring])))
 
             self.doneEvent()
 
     def doUpdate(self):
-        lines = MB().session.windows[0].linebuffer.lines
+        lines = self.master.session.windows[0].linebuffer.lines
 
         if self.nlines < len(lines):
             sys.stdout.write("\r")
             for l in lines[self.nlines:]:
                 sys.stdout.write("{}\n".format(ansi.astringToAnsi(l)))
-            sys.stdout.write(str(MB().session.getPromptLine()))
+            sys.stdout.write(str(self.master.session.getPromptLine()))
 
         sys.stdout.flush()
 

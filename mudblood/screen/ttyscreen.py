@@ -9,8 +9,6 @@ from mudblood import ansi
 from mudblood import screen
 from mudblood.screen import modalscreen
 
-from mudblood.main import MB
-
 from mudblood.screen import term
 
 class TtySource(event.AsyncSource):
@@ -52,7 +50,7 @@ class TtyScreen(modalscreen.ModalScreen):
         # Create a source for user input
         self.source = TtySource(self.term)
         self.source.start()
-        self.source.bind(MB().drain)
+        self.source.bind(self.master.drain)
 
     def run(self):
         while True:
@@ -78,13 +76,13 @@ class TtyScreen(modalscreen.ModalScreen):
             self.doneEvent()
 
     def doUpdate(self):
-        lines = MB().session.windows[0].linebuffer.lines
+        lines = self.master.session.windows[0].linebuffer.lines
 
         self.term.write("\r")
         for l in lines[self.nlines:]:
             self.term.write("{}\n".format(ansi.astringToAnsi(l)))
         self.term.erase_line()
-        self.term.write(ansi.astringToAnsi(MB().session.getPromptLine()))
+        self.term.write(ansi.astringToAnsi(self.master.session.getPromptLine()))
         
         if self.modeManager.getMode() == 'normal':
             self.term.write(self.normalMode.getBuffer())

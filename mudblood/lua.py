@@ -10,8 +10,6 @@ from mudblood import rpc
 from mudblood import colors
 from mudblood import ansi
 
-from mudblood.main import MB
-
 class Lua(object):
     def __init__(self, session, packagePath):
         self.packagePath = packagePath
@@ -159,7 +157,8 @@ class Lua(object):
                 self.error("Encoding {} not supported".format(value))
 
     def editor(self, content):
-        return MB().screen.editor(content)
+        self.error("Editor not supported for now.")
+        #return MB().screen.editor(content)
 
     def rpcClient(self, type, path):
         if type == "unix":

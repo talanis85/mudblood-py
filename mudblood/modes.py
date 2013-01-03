@@ -20,6 +20,9 @@ class ModeManager(object):
         return self._modes[self._currentMode]
 
 class Mode(object):
+    def __init__(self, screen):
+        self.screen = screen
+
     def onEnter(self):
         pass
 
@@ -30,7 +33,8 @@ class Mode(object):
         pass
 
 class BufferMode(Mode):
-    def __init__(self):
+    def __init__(self, screen):
+        super(BufferMode, self).__init__(screen)
         self._buffer = ""
         self._saved_buffer = ""
         self._cursor = 0

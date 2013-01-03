@@ -3,8 +3,6 @@ import os
 import time
 import argparse
 
-mainMB = None
-
 def main():
     from mudblood.main import Mudblood
 
@@ -20,12 +18,7 @@ def main():
             "script": options.script
             }
 
-    global mainMB
-    mainMB = Mudblood(options.i)
-    mainMB.run(config)
-
-def MB():
-    return mainMB
+    Mudblood(options.i).run(config)
 
 from mudblood import event
 from mudblood import session
@@ -44,23 +37,24 @@ class Mudblood(object):
     def run(self, config):
         if self.screenType == "termbox":
             import mudblood.screen.tbscreen
-            self.screen = mudblood.screen.tbscreen.TermboxScreen()
+            self.screen = mudblood.screen.tbscreen.TermboxScreen(self)
         elif self.screenType == "serial":
             import mudblood.screen.serial
-            self.screen = mudblood.screen.serial.SerialScreen()
+            self.screen = mudblood.screen.serial.SerialScreen(self)
         elif self.screenType == "pygame":
             import mudblood.screen.pgscreen
-            self.screen = mudblood.screen.pgscreen.PygameScreen()
+            self.screen = mudblood.screen.pgscreen.PygameScreen(self)
         elif self.screenType == "tty":
             import mudblood.screen.ttyscreen
-            self.screen = mudblood.screen.ttyscreen.TtyScreen()
+            self.screen = mudblood.screen.ttyscreen.TtyScreen(self)
         elif self.screenType == "tk":
             import mudblood.screen.tkscreen
-            self.screen = mudblood.screen.tkscreen.TkScreen()
+            self.screen = mudblood.screen.tkscreen.TkScreen(self)
         elif self.screenType == "wx":
             import mudblood.screen.wxscreen
-            self.screen = mudblood.screen.wxscreen.WxScreen()
+            self.screen = mudblood.screen.wxscreen.WxScreen(self)
 
+        self.screen.bind(self.drain)
         self.screen.start()
 
         # Initialize session

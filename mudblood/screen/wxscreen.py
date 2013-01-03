@@ -9,15 +9,13 @@ from mudblood import ansi
 
 from mudblood.screen import modalscreen
 
-from mudblood.main import MB
-
 DestroyEvent, EVT_DESTROY_EVENT = wx.lib.newevent.NewEvent()
 UpdateEvent, EVT_UPDATE_EVENT = wx.lib.newevent.NewEvent()
 ModeEvent, EVT_MODE_EVENT = wx.lib.newevent.NewEvent()
 
 class WxScreen(modalscreen.ModalScreen):
-    def __init__(self):
-        super(WxScreen, self).__init__()
+    def __init__(self, master):
+        super(WxScreen, self).__init__(master)
 
         self.ready = False
         self.nlines = 0
@@ -76,7 +74,7 @@ class WxScreen(modalscreen.ModalScreen):
         self.updateScreen()
 
     def doUpdate(self, ev):
-        lines = MB().session.windows[0].linebuffer.lines
+        lines = self.master.session.windows[0].linebuffer.lines
 
         pos = self.text.XYToPosition(0, self.text.GetNumberOfLines()-1)
         self.text.Remove(pos, pos+100)
@@ -85,7 +83,7 @@ class WxScreen(modalscreen.ModalScreen):
         for l in lines[self.nlines:]:
             text += str(l) + "\n"
 
-        text += str(MB().session.getPromptLine())
+        text += str(self.master.session.getPromptLine())
         if self.modeManager.getMode() == "normal":
             text += self.normalMode.getBuffer()
         elif self.modeManager.getMode() == "lua":

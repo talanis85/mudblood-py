@@ -3,17 +3,15 @@ from mudblood import modes
 from mudblood import keys
 from mudblood import event
 
-from mudblood.main import MB
-
 class ModalScreen(screen.Screen):
-    def __init__(self):
-        super(ModalScreen, self).__init__()
+    def __init__(self, master):
+        super(ModalScreen, self).__init__(master)
 
-        self.normalMode = NormalMode()
-        self.consoleMode = ConsoleMode()
-        self.luaMode = LuaMode()
-        self.mapMode = MapMode()
-        self.promptMode = PromptMode()
+        self.normalMode = NormalMode(self)
+        self.consoleMode = ConsoleMode(self)
+        self.luaMode = LuaMode(self)
+        self.mapMode = MapMode(self)
+        self.promptMode = PromptMode(self)
 
         # Create the mode manager
         self.modeManager = modes.ModeManager("normal", {
@@ -24,72 +22,72 @@ class ModalScreen(screen.Screen):
             })
 
 class NormalMode(modes.BufferMode):
-    def __init__(self):
-        super(NormalMode, self).__init__()
+    def __init__(self, screen):
+        super(NormalMode, self).__init__(screen)
 
     def onKey(self, key):
-        bindret = MB().session.bindings.key(key)
+        bindret = self.screen.master.session.bindings.key(key)
 
         if bindret == True:
             pass
         elif bindret == False:
-            MB().session.bindings.reset()
+            self.screen.master.session.bindings.reset()
             if key == ord("\n"):
                 self.addHistory()
 
-                MB().drain.put(event.InputEvent(self.getBuffer(), display=True))
+                self.screen.put(event.InputEvent(self.getBuffer(), display=True))
                 self.clearBuffer()
             elif key == keys.KEY_CTRL_BACKSLASH:
-                MB().drain.put(event.ModeEvent("lua"))
+                self.screen.put(event.ModeEvent("lua"))
             elif key == keys.KEY_ESC:
-                MB().drain.put(event.ModeEvent("console"))
+                self.screen.put(event.ModeEvent("console"))
             elif key == keys.KEY_PGUP:
-                MB().session.windows[0].scroll += 20
+                self.screen.master.session.windows[0].scroll += 20
             elif key == keys.KEY_PGDN:
-                MB().session.windows[0].scroll -= 20
-                if MB().session.windows[0].scroll < 0:
-                    MB().session.windows[0].scroll = 0
+                self.screen.master.session.windows[0].scroll -= 20
+                if self.screen.master.session.windows[0].scroll < 0:
+                    self.screen.master.session.windows[0].scroll = 0
             else:
                 super(NormalMode, self).onKey(key)
         else:
-            MB().session.bindings.reset()
+            self.screen.master.session.bindings.reset()
             if callable(bindret):
-                MB().drain.put(event.CallableEvent(bindret))
+                self.screen.put(event.CallableEvent(bindret))
             elif isinstance(bindret, basestring):
-                MB().drain.put(event.InputEvent(bindret))
+                self.screen.put(event.InputEvent(bindret))
             else:
-                MB().drain.put(event.LogEvent("Invalid binding.", "err"))
+                self.screen.put(event.LogEvent("Invalid binding.", "err"))
 
 class ConsoleMode(modes.Mode):
     def onKey(self, key):
         if key == keys.KEY_ESC:
-            MB().drain.put(event.ModeEvent("normal"))
+            self.screen.put(event.ModeEvent("normal"))
         else:
             super(ConsoleMode, self).onKey(key)
 
 class LuaMode(modes.BufferMode):
     def onKey(self, key):
         if key == keys.KEY_ESC:
-            MB().drain.put(event.ModeEvent("normal"))
+            self.screen.put(event.ModeEvent("normal"))
         elif key == ord("\n"):
             self.addHistory()
 
-            MB().session.luaEval(self.getBuffer() + "\n")
+            self.screen.master.session.luaEval(self.getBuffer() + "\n")
             self.clearBuffer()
-            MB().drain.put(event.ModeEvent("normal"))
+            self.screen.put(event.ModeEvent("normal"))
         else:
             super(LuaMode, self).onKey(key)
 
 class MapMode(modes.Mode):
     def onKey(self, key):
         if key == keys.KEY_ESC:
-            MB().drain.put(event.ModeEvent("normal"))
+            self.screen.put(event.ModeEvent("normal"))
         else:
             super(MapMode, self).onKey(key)
 
 class PromptMode(modes.BufferMode):
-    def __init__(self):
-        super(PromptMode, self).__init__()
+    def __init__(self, screen):
+        super(PromptMode, self).__init__(screen)
         self.call = None
         self.text = ""
 
@@ -105,11 +103,11 @@ class PromptMode(modes.BufferMode):
 
     def onKey(self, key):
         if key == keys.KEY_ESC:
-            MB().drain.put(event.ModeEvent("normal"))
+            self.screen.put(event.ModeEvent("normal"))
         elif key == ord("\n"):
-            MB().drain.put(event.ModeEvent("normal"))
+            self.screen.put(event.ModeEvent("normal"))
             if self.call:
-                MB().drain.put(event.CallableEvent(self.call, self.getBuffer()))
+                self.screen.put(event.CallableEvent(self.call, self.getBuffer()))
             self.clearBuffer()
         else:
             super(PromptMode, self).onKey(key)

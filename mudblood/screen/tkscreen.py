@@ -8,11 +8,9 @@ from mudblood import ansi
 
 from mudblood.screen import modalscreen
 
-from mudblood.main import MB
-
 class TkScreen(modalscreen.ModalScreen):
-    def __init__(self):
-        super(TkScreen, self).__init__()
+    def __init__(self, master):
+        super(TkScreen, self).__init__(master)
 
         self.nlines = 0
     
@@ -44,7 +42,7 @@ class TkScreen(modalscreen.ModalScreen):
         self.doUpdate(None)
 
     def doUpdate(self, ev):
-        lines = MB().session.windows[0].linebuffer.lines
+        lines = self.master.session.windows[0].linebuffer.lines
 
         self.text.config(state=NORMAL)
         print(self.text.index("end -1l"))
@@ -53,7 +51,7 @@ class TkScreen(modalscreen.ModalScreen):
         self.text.delete("end -2l", "end -1l")
         for l in lines[self.nlines:]:
             self.text.insert(END, str(l) + "\n")
-        self.text.insert(END, str(MB().session.getPromptLine()))
+        self.text.insert(END, str(self.master.session.getPromptLine()))
         self.text.insert(END, self.normalMode.getBuffer())
         self.text.config(state=DISABLED)
 

@@ -11,8 +11,6 @@ from mudblood import map
 import subprocess
 import tempfile
 
-from mudblood.main import MB
-
 termbox.DEFAULT = 0x09
 
 class TermboxSource(event.AsyncSource):
@@ -38,8 +36,8 @@ class TermboxSource(event.AsyncSource):
             return event.ResizeEvent(w, h)
 
 class TermboxScreen(modalscreen.ModalScreen):
-    def __init__(self):
-        super(TermboxScreen, self).__init__()
+    def __init__(self, master):
+        super(TermboxScreen, self).__init__(master)
 
         # Initialize Termbox
         self.tb = termbox.Termbox()
@@ -54,7 +52,7 @@ class TermboxScreen(modalscreen.ModalScreen):
         # Create a source for user input
         self.source = TermboxSource(self.tb)
         self.source.start()
-        self.source.bind(MB().drain)
+        self.source.bind(self.master.drain)
 
     def run(self):
         while True:
@@ -93,9 +91,9 @@ class TermboxScreen(modalscreen.ModalScreen):
         # If in consoleMode, draw mudblood windows
 
         if self.modeManager.getMode() == "console":
-            windows = MB().windows
+            windows = self.master.windows
         else:
-            windows = MB().session.windows
+            windows = self.master.session.windows
 
         self.tb.clear()
 
@@ -113,10 +111,10 @@ class TermboxScreen(modalscreen.ModalScreen):
                         fixh = 5
                         lines = w.linebuffer.render(self.width, w.scroll, wh - fixh) \
                               + w.linebuffer.render(self.width, 0, fixh) \
-                              + [MB().session.getPromptLine()]
+                              + [self.master.session.getPromptLine()]
                     else:
                         lines = w.linebuffer.render(self.width, w.scroll, wh) \
-                              + [MB().session.getPromptLine()]
+                              + [self.master.session.getPromptLine()]
                     if len(lines) < wh:
                         y += wh - len(lines)
 
@@ -179,15 +177,15 @@ class TermboxScreen(modalscreen.ModalScreen):
 
         # System status
         x = self.width - 1
-        for c in reversed(MB().session.getStatusLine()):
+        for c in reversed(self.master.session.getStatusLine()):
             self.tb.change_cell(x, y, ord(c), termbox.DEFAULT, termbox.DEFAULT)
             x -= 1
 
         # Status line
         x = 0
         y += 1
-        x += (self.width - len(MB().session.userStatus)) / 2
-        for c in MB().session.userStatus:
+        x += (self.width - len(self.master.session.userStatus)) / 2
+        for c in self.master.session.userStatus:
             self.tb.change_cell(x, y, ord(c), termbox.DEFAULT, termbox.DEFAULT)
             x += 1
         
@@ -207,7 +205,7 @@ class TermboxScreen(modalscreen.ModalScreen):
             self.tb = termbox.Termbox()
             self.source = TermboxSource(self.tb)
             self.source.start()
-            self.source.bind(MB().drain)
+            self.source.bind(self.master.drain)
             self.tb.set_clear_attributes(termbox.DEFAULT, termbox.DEFAULT)
             self.tb.set_cursor(-1, -1)
 
