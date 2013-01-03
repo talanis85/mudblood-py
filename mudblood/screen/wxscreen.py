@@ -32,7 +32,7 @@ class WxScreen(modalscreen.ModalScreen):
         self.win = wx.Frame(None, wx.ID_ANY, "Mudblood")
 
         self.text = wx.TextCtrl(self.win, style=wx.TE_MULTILINE)
-        self.text.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL, False, u'Terminus'))
+        self.text.SetFont(wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTWEIGHT_NORMAL, wx.FONTWEIGHT_NORMAL))
         self.text.SetForegroundColour(wx.WHITE)
         self.text.SetBackgroundColour(wx.BLACK)
 
