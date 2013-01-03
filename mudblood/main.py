@@ -108,6 +108,7 @@ class Mudblood(object):
             self.screen.tick()
 
             # TODO: multiple sessions
+        self.log("Goodbye", "info")
             
         self.screen.destroy()
         self.screen.join()
@@ -136,16 +137,16 @@ class Mudblood(object):
 
     def log(self, msg, level="debug"):
         if level == "debug3":
-            self.console.echo("-- DEBUG: " + msg)
+            self.screen.log("-- DEBUG: " + msg)
         elif level == "debug2":
-            self.console.echo("-- DEBUG: " + msg)
+            self.screen.log("-- DEBUG: " + msg)
         elif level == "debug":
-            self.console.echo("-- DEBUG: " + msg)
+            self.screen.log("-- DEBUG: " + msg)
         elif level == "info":
-            self.console.echo("-- INFO: " + msg)
+            self.screen.log("-- INFO: " + msg)
         elif level == "warn":
-            self.console.echo("-- WARNING: " + msg)
+            self.screen.log("-- WARNING: " + msg)
         elif level == "err":
-            self.console.echo("-- ERROR: " + msg)
+            self.screen.log("-- ERROR: " + msg)
         else:
-            self.console.echo("-- CRITICAL: " + msg)
+            self.screen.log("-- CRITICAL: " + msg)

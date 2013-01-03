@@ -36,6 +36,9 @@ class Screen(event.Source):
     def start(self):
         self.thread.start()
 
+    def log(self, text):
+        print(text)
+
     def run(self):
         pass
 

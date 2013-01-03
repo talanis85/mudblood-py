@@ -77,6 +77,9 @@ class TermboxScreen(modalscreen.ModalScreen):
                 self.modeManager.key(ev.key)
 
             self.doneEvent()
+    
+    def log(self, text):
+        pass
 
     def doUpdate(self):
         x = 0
