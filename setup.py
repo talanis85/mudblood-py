@@ -4,6 +4,8 @@ use_setuptools()
 from setuptools import setup
 
 import sys
+import os
+import glob
 
 features = ['termbox', 'pygame', 'wx']
 
@@ -17,13 +19,11 @@ configuration = {
  
 if "py2exe" in sys.argv:
     import py2exe
-    from modulefinder import Module
-    import glob, fnmatch
-    import os, shutil
-    import operator
 
     sys.path.append("C:\\Programme\\Microsoft Visual Studio 9.0\\VC\\redist\\x86\\Microsoft.VC90.CRT")
     sys.path.append("C:\\Program Files\\Microsoft Visual Studio 9.0\\VC\\redist\\x86\\Microsoft.VC90.CRT")
+
+    includes = []
 
     print("Using py2exe...")
 
@@ -34,29 +34,16 @@ if "py2exe" in sys.argv:
                 return 0
             return origIsSystemDLL(pathname)
         py2exe.build_exe.isSystemDLL = isSystemDLL
-     
-    class p2e(py2exe.build_exe.py2exe):
-        def copy_extensions(self, extensions):
-            if 'pygame' in features:
-                import pygame
 
-                #Get pygame default font
-                pygamedir = os.path.split(pygame.base.__file__)[0]
-                pygame_default_font = os.path.join(pygamedir, pygame.font.get_default_font())
-         
-                #Add font to list of extension to be copied
-                extensions.append(Module("pygame.font", pygame_default_font))
-                py2exe.build_exe.py2exe.copy_extensions(self, extensions)
+        includes.append('pygame.font')
      
     setup(
-        cmdclass = {'py2exe': p2e},
         install_requires = ['lupa >= 0.20'],
         packages = ['mudblood'],
-        includes = ['pygame.font'],
         data_files = [('lua', glob.glob('mudblood/lua/*.lua'))],
-        #console = ['mudblood/main.py'],
-        options = {'py2exe': {'bundle_files': 1}},
-        windows = {{'script': "mudblood/main.py"}},
+        options = {'py2exe': {'bundle_files': 1, 'includes': includes}},
+        console = [{'script': "mudblood/main.py", 'dest_base': "mudblood-console"}],
+        windows = [{'script': "mudblood/main.py", 'dest_base': "mudblood"}],
         zipfile = None,
         **configuration
     )
