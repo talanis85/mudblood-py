@@ -19,6 +19,7 @@ class WxScreen(modalscreen.ModalScreen):
     def __init__(self):
         super(WxScreen, self).__init__()
 
+        self.ready = False
         self.nlines = 0
     
     def updateScreen(self):
@@ -42,6 +43,8 @@ class WxScreen(modalscreen.ModalScreen):
 
         self.win.Show(True)
 
+        self.ready = True
+
         self.app.MainLoop()
 
     def destroy(self):
@@ -54,7 +57,8 @@ class WxScreen(modalscreen.ModalScreen):
         wx.PostEvent(self.app, ModeEvent(mode=mode, args=kwargs))
 
     def updateScreen(self):
-        wx.PostEvent(self.app, UpdateEvent())
+        if self.ready:
+            wx.PostEvent(self.app, UpdateEvent())
 
     def doDestroy(self, ev):
         self.win.Close(True)
