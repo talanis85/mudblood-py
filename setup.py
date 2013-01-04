@@ -7,7 +7,8 @@ import sys
 import os
 import glob
 
-features = ['termbox', 'pygame', 'wx']
+screens_available = ['ttyscreen', 'tbscreen', 'pgscreen', 'serial', 'wxscreen']
+screens = ['ttyscreen', 'tbscreen', 'pgscreen', 'serial', 'wxscreen']
 
 configuration = {
         'name': "mudblood",
@@ -25,10 +26,11 @@ if "py2exe" in sys.argv:
 
     includes = []
     excludes = []
+    packages = ['mudblood', 'mudblood.screen']
 
     print("Using py2exe...")
 
-    if 'pygame' in features:
+    if 'pgscreen' in screens:
         origIsSystemDLL = py2exe.build_exe.isSystemDLL
         def isSystemDLL(pathname):
             if os.path.basename(pathname).lower() in ("libfreetype-6.dll", "libogg-0.dll","sdl_ttf.dll"):
@@ -37,17 +39,16 @@ if "py2exe" in sys.argv:
         py2exe.build_exe.isSystemDLL = isSystemDLL
 
         includes.append('pygame.font')
+    
+    for s in screens_available:
+        if s not in screens:
+	    excludes.append('mudblood.screen.' + s)
+    for s in screens:
+        includes.append('mudblood.screen.' + s)
 
-    if 'pygame' not in features:
-        excludes.append('pygame')
-    if 'termbox' not in features:
-        excludes.append('termbox')
-    if 'wx' not in features:
-        excludes.append('wx')
-     
     setup(
         install_requires = ['lupa >= 0.20'],
-        packages = ['mudblood'],
+        packages = packages,
         data_files = [('lua', glob.glob('mudblood/lua/*.lua'))],
         options = {'py2exe': {'bundle_files': 1, 'includes': includes, 'excludes': excludes}},
         console = [{'script': "mudblood/main.py", 'dest_base': "mudblood-console"}],
