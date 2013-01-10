@@ -15,12 +15,6 @@ local function walk_cr(room, weightFunction)
 
     walk_stop = false
 
-    p_debug = ""
-    for _, pp in ipairs(p) do
-        p_debug = p_debug .. pp .. ", "
-    end
-    print(p_debug)
-
     if M.pre_walk then M.pre_walk() end
 
     for i=1,#p do
