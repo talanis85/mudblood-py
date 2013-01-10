@@ -61,8 +61,8 @@ class Lua(object):
     def loadFile(self, filename):
         self.profilePath = os.path.abspath(os.path.dirname(filename))
         self.filename = filename
-        with open(filename, "r") as f:
-            self.lua.execute(f.read())
+
+        self.lua.globals().dofile(filename)
     
     def toString(self, ob):
         if isinstance(ob, lupa._lupa._LuaTable):
@@ -135,9 +135,9 @@ class Lua(object):
             self.session.echo(colors.AString(str(ob)))
 
     def load(self, filename):
-        with open(os.path.join(self.profilePath, filename), "r") as f:
-            #return self.lua.execute(f.read())
-            return self.lua.globals().loadstring(f.read())()
+        path = os.path.abspath(os.path.join(self.profilePath, filename))
+
+        return self.lua.globals().dofile(path)
 
     def prompt(self, text, call):
         self.session.put(event.ModeEvent("prompt", text=text, call=call))
