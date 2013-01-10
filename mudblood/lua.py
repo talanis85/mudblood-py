@@ -190,6 +190,12 @@ class Lua_Path(LuaExposedObject):
     def profile(self):
         return self._lua.profilePath
 
+    def library(self):
+        return os.path.dirname(self._lua.packagePath)
+
+    def profileBase(self):
+        return os.path.join(os.environ['HOME'], ".config", "mudblood-py")
+
 class Lua_Context(LuaExposedObject):
     def __init__(self, lua):
         super(Lua_Context, self).__init__(lua)
