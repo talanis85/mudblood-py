@@ -534,7 +534,10 @@ end
 
 local function f_resume(cr, data)
     return function (self, arg)
-        coroutine.resume(cr, data, arg)
+        ret, err = coroutine.resume(cr, data, arg)
+        if ret == false then
+            error(err)
+        end
         return nil, true
     end
 end
