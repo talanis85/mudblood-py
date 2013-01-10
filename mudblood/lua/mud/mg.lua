@@ -295,6 +295,8 @@ function M.mapper.setup()
     nmap("<E>w", function () prompt("walk: ", M.mapper.walk) end)
     nmap("<E><TAB>b", M.mapper.walkBack)
 
+    nmap("<E><TAB>d", function () prompt('walklevel: ', function (l) walk_level = tonumber(l) end) end)
+
     nmap("<E><TAB>mf", function () M.mapper.mode = "fixed"; info("mapper: Modus fixed") end)
     nmap("<E><TAB>ma", function () M.mapper.mode = "auto"; info("mapper: Modus auto") end)
     nmap("<E><TAB>mn", function () M.mapper.mode = "node"; info("mapper: Modus node") end)
