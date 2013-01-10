@@ -49,7 +49,7 @@ if "py2exe" in sys.argv:
     setup(
         install_requires = ['lupa >= 0.20'],
         packages = packages,
-        data_files = [('lua', glob.glob('mudblood/lua/*.lua'))],
+        data_files = [('lua', glob.glob('mudblood/lua/*.lua')), ('lua/mud', glob.glob('mudblood/lua/mud/*.lua'))],
         options = {'py2exe': {'bundle_files': 1, 'includes': includes, 'excludes': excludes}},
         console = [{'script': "mudblood/main.py", 'dest_base': "mudblood-console"}],
         windows = [{'script': "mudblood/main.py", 'dest_base': "mudblood"}],
@@ -62,7 +62,7 @@ else:
     setup(
         install_requires = ['lupa >= 0.20'],
         packages = ['mudblood', 'mudblood.screen'],
-        package_data = {'mudblood': ['mudblood/lua/*.lua']},
+        include_package_data = True,
         entry_points = {'console_scripts': ['mudblood = mudblood.main:main']},
         **configuration
     )
