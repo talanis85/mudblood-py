@@ -158,7 +158,10 @@ class Lua(object):
 
     def nmap(self, key, value=None):
         if value is None:
-            self.session.bindings.delete(self.session.bindings.parse(key))
+            try:
+                self.session.bindings.delete(self.session.bindings.parse(key))
+            except:
+                self.error("No binding for " + key + " found.")
         else:
             self.session.bindings.add(self.session.bindings.parse(key), value)
 
