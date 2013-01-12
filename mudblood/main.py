@@ -97,6 +97,8 @@ class Mudblood(object):
         self.screen.destroy()
         self.screen.join()
 
+        self.session.destroy()
+
     def event(self, ev):
         #if not isinstance(ev, event.RawEvent):
         #    self.log(str(ev), "debug3")

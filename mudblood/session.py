@@ -47,6 +47,9 @@ class Session(event.Source):
 
         self.log("Session started.", "info")
 
+    def destroy(self):
+        self.lua.destroy()
+
     def event(self, ev):
         """
         This function handles incoming events (see event.py)

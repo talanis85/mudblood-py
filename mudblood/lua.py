@@ -9,6 +9,7 @@ from mudblood import map
 from mudblood import rpc
 from mudblood import colors
 from mudblood import ansi
+from mudblood import flock
 
 class Lua(object):
     def __init__(self, session, packagePath):
@@ -57,6 +58,12 @@ class Lua(object):
         g.map = Lua_Map(self)
 
         g.markPrompt = self.markPrompt
+
+    def destroy(self):
+        try:
+            self.lua.globals().map.close()
+        except:
+            pass
 
     def loadFile(self, filename):
         self.profilePath = os.path.abspath(os.path.dirname(filename))
@@ -284,6 +291,11 @@ class Lua_Map(LuaExposedObject):
     WEST        = map.WEST
     NORTHWEST   = map.NORTHWEST
 
+    def __init__(self, lua):
+        super(Lua_Map, self).__init__(lua)
+        self._filename = None
+        self._flock = None
+
     def room(self, id=None):
         if id is None:
             return Lua_Map_Room(self._lua, self._lua.session.map.currentRoom)
@@ -307,23 +319,47 @@ class Lua_Map(LuaExposedObject):
 
     directions = property(getDirections, setDirections)
 
-    def load(self, filename):
+    def load(self, filename, mode="r"):
         oldCurrentRoom = self._lua.session.map.currentRoom
+
+        if mode == "w":
+            if self._flock:
+                self._flock.release()
+
+            try:
+                self._flock = flock.Lock(filename)
+            except flock.LockedException:
+                self._lua.error("Map file is already locked.")
 
         with open(filename, "r") as f:
             self._lua.session.map.load(f)
 
-        self._lua.session.map.goto(oldCurrentRoom)
-
-    def load_old(self, filename):
-        oldCurrentRoom = self._lua.session.map.currentRoom
-
-        with open(filename, "r") as f:
-            self._lua.session.map.load_old(f)
+        self._filename = filename
 
         self._lua.session.map.goto(oldCurrentRoom)
 
-    def save(self, filename):
+    def close(self):
+        if self._filename is None:
+            self._lua.error("No map loaded.")
+        if self._flock is not None:
+            self._flock.release()
+            self._flock = None
+            self._filename = None
+
+    def save(self, filename=None):
+        if filename is None:
+            filename = self._filename
+
+        if filename == self._filename:
+            if self._flock is None:
+                self._lua.error("To save, the map must be opened with mode 'w'")
+        else:
+            try:
+                templock = flock.Lock(filename)
+                templock.release()
+            except flock.LockedException:
+                self._lua.error("Map file {} is locked.".format(filename))
+
         with open(filename, "w") as f:
             self._lua.session.map.save(f)
 
