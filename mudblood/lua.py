@@ -47,6 +47,7 @@ class Lua(object):
         g.directSend = self.directSend
         g.nmap = self.nmap
         g.prompt = self.prompt
+        g.stripColors = self.stripColors
         g.load = self.load
         g.config = self.config
         g.editor = self.editor
@@ -140,6 +141,12 @@ class Lua(object):
             self.session.echo(ansi.Ansi().parseToAString(ob))
         else:
             self.session.echo(colors.AString(str(ob)))
+
+    def stripColors(self, string):
+        if not isinstance(string, basestring):
+            self._error("String expected")
+
+        return str(ansi.Ansi().parseToAString(string))
 
     def load(self, filename):
         path = os.path.abspath(os.path.join(self.profilePath, filename))
