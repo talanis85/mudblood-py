@@ -402,8 +402,8 @@ class Lua_Map_Room(LuaExposedObject):
 
     def delete(self):
         self._checkValid()
-        for e in self.edges:
-            e.delete(True)
+        for e in self._lua.session.map.rooms[self._roomId].edges:
+            Lua_Map_Edge(self._lua, self._roomId, e).delete(True)
 
         del self._lua.session.map.rooms[self._roomId]
         self._valid = False
