@@ -68,6 +68,7 @@ class Lua(object):
 
     def loadFile(self, filename):
         self.profilePath = os.path.abspath(os.path.dirname(filename))
+        self.loadPath = self.profilePath
         self.filename = filename
 
         self.lua.globals().dofile(filename)
@@ -149,9 +150,14 @@ class Lua(object):
         return str(ansi.Ansi().parseToAString(string))
 
     def load(self, filename):
-        path = os.path.abspath(os.path.join(self.profilePath, filename))
+        path = os.path.abspath(os.path.join(self.loadPath, filename))
 
-        return self.lua.globals().dofile(path)
+        oldLoadPath = self.loadPath
+        self.loadPath = os.path.dirname(path)
+        ret = self.lua.globals().dofile(path)
+        self.loadPath = oldLoadPath
+
+        return ret
 
     def prompt(self, text, call):
         self.session.put(event.ModeEvent("prompt", text=text, call=call))
