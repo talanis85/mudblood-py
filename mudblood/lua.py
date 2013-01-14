@@ -449,6 +449,10 @@ class Lua_Map_Room(LuaExposedObject):
     def findNeighbor(self, d):
         self._checkValid()
         self.neighbor = None
+
+        if d not in self._lua.session.map.dirConfig:
+            return None
+
         dx, dy = map.getDirectionDelta(self._lua.session.map.dirConfig[d])
 
         def dfs_callback(r):
