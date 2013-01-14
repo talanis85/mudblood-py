@@ -279,8 +279,11 @@ class Lua_Telnet(LuaExposedObject):
     SB = 250
     SE = 240
 
+    SUPPRESS_GA = 3
     DO_EOR = 25
+
     EOR = 239
+    GA = 249
 
     def negWill(self, option):
         if not self._lua.session.telnet: raise Exception("Not connected")
