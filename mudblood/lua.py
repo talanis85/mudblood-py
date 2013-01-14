@@ -120,6 +120,7 @@ class Lua(object):
         if self.filename is None:
             self.error("No file loaded")
         else:
+            self.lua.globals().map.close()
             self.luaInit()
             self.loadFile(self.filename)
     
@@ -356,7 +357,7 @@ class Lua_Map(LuaExposedObject):
 
     def close(self):
         if self._filename is None:
-            self._lua.error("No map loaded.")
+            return
         if self._flock is not None:
             self._flock.release()
             self._flock = None
