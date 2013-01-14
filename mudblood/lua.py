@@ -31,6 +31,8 @@ class Lua(object):
         self.lua.execute("events = require 'events'")
         self.lua.execute("triggers = require 'triggers'")
         self.lua.execute("mapper = require 'mapper'")
+        self.lua.execute("profile = require 'profile'")
+        self.lua.execute("help = require 'help'")
 
         self.lua.execute("require 'common'")
 
