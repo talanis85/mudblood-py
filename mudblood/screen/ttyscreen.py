@@ -74,7 +74,10 @@ class TtyScreen(modalscreen.ModalScreen):
             elif isinstance(ev, screen.ModeScreenEvent):
                 self.modeManager.setMode(ev.mode, **ev.args)
             elif isinstance(ev, screen.KeyScreenEvent):
-                self.modeManager.key(ev.key)
+                if ev.key == ord("#"):
+                    self.put(event.ModeEvent("lua"))
+                else:
+                    self.modeManager.key(ev.key)
 
             self.doneEvent()
 
