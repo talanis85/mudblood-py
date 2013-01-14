@@ -29,8 +29,6 @@ class Mudblood(object):
     def __init__(self, screenType):
         self.session = None
         self.drain = event.Drain()
-        self.console = linebuffer.Linebuffer()
-        self.windows = [window.LinebufferWindow(self.console)]
         self.screenType = screenType
         self.path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 

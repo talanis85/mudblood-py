@@ -7,6 +7,7 @@ from mudblood.screen import modalscreen
 from mudblood import keys
 from mudblood import colors
 from mudblood import map
+from mudblood import window
 
 import subprocess
 import tempfile
@@ -50,7 +51,7 @@ class TermboxScreen(modalscreen.ModalScreen):
         self.updateSize(self.tb.width(), self.tb.height())
 
         # Initialize the main linebuffer
-        self.lb = linebuffer.Linebuffer()
+        self.console = window.LinebufferWindow(linebuffer.Linebuffer())
 
         # Create a source for user input
         self.source = TermboxSource(self.tb)
@@ -80,7 +81,7 @@ class TermboxScreen(modalscreen.ModalScreen):
             self.doneEvent()
     
     def log(self, text):
-        pass
+        self.console.linebuffer.echo(text)
 
     def doUpdate(self):
         x = 0
@@ -94,7 +95,7 @@ class TermboxScreen(modalscreen.ModalScreen):
         # If in consoleMode, draw mudblood windows
 
         if self.modeManager.getMode() == "console":
-            windows = self.master.windows
+            windows = [self.console]
         else:
             windows = self.master.session.windows
 
