@@ -82,6 +82,7 @@ function M.base.setup()
     tlRecv:add(M.base.report.trigger2, "report", 200)
     tlRecv:add(M.base.fightTriggers, "fight")
     tlRecv:add(M.base.talkTriggers, "communication")
+    tlRecv:add(M.base.fitnessTrigger, "fitness")
 
     M.onReport = M.base.onReport
 
@@ -94,11 +95,41 @@ function M.base.setup()
         end
     end)
 
+    -- Logging
+    M.base.logfd = assert(io.open(path.profile() .. "/log", "a"))
+
+    tlRecv:add(M.base.recvLogger, "logger", -1000)
+    tlSend:add(M.base.sendLogger, "logger", -1000)
+
     nmap("<E>q", quit)
     nmap("<E>`", function () prompt("focus: ", function (f) M.focus(f); print("Fokus: " .. f) end) end)
 
     M.base.focus = ""
 end
+
+-- Log
+
+M.base.recvLogger = triggers.line_func("Logger", function (l)
+    if mapper.walking() then
+        return nil
+    end
+
+    if M.base.logfd ~= nil then
+        M.base.logfd:write(stripColors(l) .. "\n")
+        M.base.logfd:flush()
+    end
+end)
+
+M.base.sendLogger = triggers.line_func("Logger", function (l)
+    if mapper.walking() then
+        return nil
+    end
+
+    if M.base.logfd ~= nil then
+        M.base.logfd:write("> " .. stripColors(l) .. "\n")
+        M.base.logfd:flush()
+    end
+end)
 
 -- Report
 
@@ -134,9 +165,10 @@ function M.base.spell(spell, hands, epilogue)
         send("steck waffe weg")
     end
 
-    print(colors.Yellow .. spell .. colors.Off)
+    realspell = string.gsub(spell, "%%f", M.base.focus)
+    print(colors.Yellow .. realspell .. colors.Off)
 
-    send(string.gsub(spell, "%%f", M.base.focus))
+    send(realspell)
 
     if epilogue == true then
         send("zueck waffe")
@@ -145,6 +177,29 @@ function M.base.spell(spell, hands, epilogue)
         send(epilogue)
     end
 end
+
+M.base.fitnessTrigger = triggers.line_func("Defense", function (l)
+    local constitution = {
+        {"ist absolut fit", "100"},
+        {"ist schon etwas geschwaecht", "90"},
+        {"fuehlte sich heute schon besser", "80"},
+        {"ist leicht angeschlagen", "70"},
+        {"sieht nicht mehr taufrisch aus", "60"},
+        {"macht einen mitgenommenen Eindruck", "50"},
+        {"wankt bereits bedenklich", "40"},
+        {"ist in keiner guten Verfassung", "30"},
+        {"braucht dringend einen Arzt", "20"},
+        {"steht auf der Schwelle des Todes", "10"},
+    }
+
+    for k,v in ipairs(constitution) do
+        if string.find(l, v[1] .. "%.$") then
+            return l .. " (" .. v[2] .. "%)", true, false
+        end
+    end
+
+    return nil, false, false
+end)
 
 ------------------------------------------------------------------------------
 -------------------- FARBEN --------------------------------------------------
@@ -295,7 +350,7 @@ function M.mapper.setup()
     nmap("<E>w", function () prompt("walk: ", M.mapper.walk) end)
     nmap("<E><TAB>b", M.mapper.walkBack)
 
-    nmap("<E><TAB>d", function () prompt('walklevel: ', function (l) walk_level = tonumber(l) end) end)
+    nmap("<E><TAB>d", function () prompt('walklevel: ', function (l) M.mapper.walklevel = tonumber(l) end) end)
 
     nmap("<E><TAB>mf", function () M.mapper.mode = "fixed"; info("mapper: Modus fixed") end)
     nmap("<E><TAB>ma", function () M.mapper.mode = "auto"; info("mapper: Modus auto") end)
@@ -323,14 +378,15 @@ M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
         end
     end
 
-    if found == false and mapper_mode == "auto" and opposites[l] ~= nil then
+    if found == false and M.mapper.mode == "auto" and M.mapper.opposites[l] ~= nil then
         local n = map.room().findNeighbor(l)
         if n then
-            map.room().connect(n, l, opposites[l])
+            map.room().connect(n, l, M.mapper.opposites[l])
+            n.fly()
             info("mapper: Zyklus gefunden. Neue Kante gebaut.")
         else
             local newroom = map.addRoom()
-            map.room().connect(newroom, l, opposites[l])
+            map.room().connect(newroom, l, M.mapper.opposites[l])
             newroom.fly()
             info("mapper: Neuen Raum gebaut.")
         end
@@ -549,7 +605,7 @@ function M.tanjian.setup()
     nmap('<F1>', M.tanjian.spells.meditation)
     nmap('<F2>', M.tanjian.spells.kokoro)
     nmap('<F3>', M.tanjian.spells.kami)
-    --nmap('<F4>', M.tanjian.spells.kageodori)
+    nmap('<F4>', M.tanjian.spells.clanspell)
     nmap('<F5>', M.tanjian.spells.tegatana)
     nmap('<F6>', M.tanjian.spells.omamori)
     nmap('<F7>', M.tanjian.spells.hayai)
@@ -636,7 +692,7 @@ function M.tanjian.spells.hayai()
 end
 
 function M.tanjian.spells.akshara()
-    M.base.spell("akshara")
+    M.base.spell("akshara", 2)
 end
 
 function M.tanjian.spells.koryoku()
@@ -663,6 +719,11 @@ function M.tanjian.spells.kami()
     M.base.spell("kami %f")
 end
 
+-- Clanspells
+
+function M.tanjian.spells.clanspell()
+    M.base.spell("kageodori %f", 2)
+end
 
 ------------------------------------------------------------------------------
 -------------------- KLERIKER ------------------------------------------------
