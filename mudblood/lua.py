@@ -27,14 +27,14 @@ class Lua(object):
 
         g.package.path = self.packagePath
 
-        self.lua.execute("colors = require 'colors'")
-        self.lua.execute("events = require 'events'")
-        self.lua.execute("triggers = require 'triggers'")
-        self.lua.execute("mapper = require 'mapper'")
-        self.lua.execute("profile = require 'profile'")
-        self.lua.execute("help = require 'help'")
+        self.tryExecute("colors = require 'colors'")
+        self.tryExecute("events = require 'events'")
+        self.tryExecute("triggers = require 'triggers'")
+        self.tryExecute("mapper = require 'mapper'")
+        self.tryExecute("profile = require 'profile'")
+        self.tryExecute("help = require 'help'")
 
-        self.lua.execute("require 'common'")
+        self.tryExecute("require 'common'")
 
         g.ctxGlobal = Lua_Context(self)
         g.ctxRoom = Lua_Context(self)
@@ -86,6 +86,12 @@ class Lua(object):
 
     def execute(self, command):
         return self.lua.execute(command)
+
+    def tryExecute(self, command):
+        try:
+            return self.lua.execute(command)
+        except lupa.LuaError as e:
+            self.session.log(str(e), "err")
 
     def eval(self, command):
         return self.lua.eval(command)
