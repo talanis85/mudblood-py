@@ -21,9 +21,10 @@ class Session(event.Source):
     def __init__(self, script=None):
         super(Session, self).__init__()
 
+        self.lb = linebuffer.Linebuffer()
+
         self.lua = lua.Lua(self, package.getResourceFilename("lua", "?.lua"))
 
-        self.lb = linebuffer.Linebuffer()
         self.bindings = keys.Bindings()
         self.telnet = None
         self.lastLine = ""
