@@ -149,10 +149,27 @@ class TermboxScreen(modalscreen.ModalScreen):
 
         # Prompt line
         if self.modeManager.getMode() == "normal":
-            self.tb.set_cursor(x + self.normalMode.getCursor(), y)
-            for c in self.normalMode.getBuffer():
+            buf = self.normalMode.getBuffer()
+            cur = self.normalMode.getCursor()
+
+            start = max(0, cur + x - self.width + 1)
+
+            self.tb.set_cursor(min(self.width-1, x + cur), y)
+
+            if start > 0:
+                self.tb.change_cell(x, y, ord('$'), termbox.DEFAULT, termbox.YELLOW)
+                x += 1
+                start -= 1
+
+            end = start + self.width - x - 1
+
+            for c in buf[start:end]:
                 self.tb.change_cell(x, y, ord(c), termbox.YELLOW, termbox.DEFAULT)
                 x += 1
+
+            if end < len(buf)-2:
+                self.tb.change_cell(x, y, ord('$'), termbox.DEFAULT, termbox.YELLOW)
+
             x = 0
             y += 1
         elif self.modeManager.getMode() == "lua":
