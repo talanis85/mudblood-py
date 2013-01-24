@@ -154,7 +154,7 @@ class Lua(object):
 
     def stripColors(self, string):
         if not isinstance(string, basestring):
-            self._error("String expected")
+            self.error("String expected")
 
         return str(ansi.Ansi().parseToAString(string))
 
