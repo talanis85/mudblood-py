@@ -3,13 +3,15 @@ import os
 import time
 import argparse
 
+screens = ['tbscreen', 'ttyscreen', 'wxscreen'];
+
 def main():
     from mudblood.main import Mudblood
 
     parser = argparse.ArgumentParser(description="Mudblood MUD client")
     parser.add_argument("-i", metavar="interface", action='store',
-            choices=['tbscreen', 'pgscreen', 'serial', 'ttyscreen', 'tkscreen', 'wxscreen'],
-            default='tbscreen', help="The interface to use (default: termbox)")
+            choices=screens,
+            default='default', help="The interface to use (default: termbox)")
     parser.add_argument("script", action='store', nargs='?',
             help="The main script")
     options = parser.parse_args()
@@ -33,7 +35,18 @@ class Mudblood(object):
         self.path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
     def run(self, config):
-        screenModule = getattr(__import__('mudblood.screen.'+self.screenType, globals(), locals(), [], -1).screen, self.screenType)
+        screenModule = None
+
+        if self.screenType == "default":
+            for s in screens:
+                self.screenType = s
+                try:
+                    screenModule = getattr(__import__('mudblood.screen.'+self.screenType, globals(), locals(), [], -1).screen, self.screenType)
+                except ImportError:
+                    continue
+                break
+        else:
+            screenModule = getattr(__import__('mudblood.screen.'+self.screenType, globals(), locals(), [], -1).screen, self.screenType)
         self.screen = screenModule.createScreen(self)
 
         self.screen.bind(self.drain)
