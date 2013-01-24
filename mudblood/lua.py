@@ -6,7 +6,6 @@ import traceback
 from mudblood import linebuffer
 from mudblood import event
 from mudblood import map
-from mudblood import rpc
 from mudblood import colors
 from mudblood import ansi
 from mudblood import flock
@@ -54,8 +53,6 @@ class Lua(object):
         g.config = self.config
         g.editor = self.editor
         g.path = Lua_Path(self)
-        g.rpcClient = self.rpcClient
-        g.rpcServer = self.rpcServer
 
         g.telnet = Lua_Telnet(self)
         g.map = Lua_Map(self)
@@ -192,18 +189,6 @@ class Lua(object):
         self.error("Editor not supported for now.")
         #return MB().screen.editor(content)
 
-    def rpcClient(self, type, path):
-        if type == "unix":
-            return Lua_RPCObject(self, path)
-        else:
-            self.error("Supported socket types: unix")
-
-    def rpcServer(self, type, addr):
-        if type == "unix":
-            self.session.setRPCSocket(rpc.RPCServerSocket(addr))
-        else:
-            self.error("Supported socket types: unix")
-
     def markPrompt(self):
         self.session.promptLine = self.session.lastLine
         self.session.lastLine = ""
@@ -243,34 +228,6 @@ class Lua_Context(LuaExposedObject):
         self.sendTriggers = self._lua.lua.globals().triggers.TriggerList.create()
         self.recvTriggers = self._lua.lua.globals().triggers.TriggerList.create()
         self.timers = self._lua.lua.globals().triggers.TriggerList.create()
-
-class Lua_RPCObject(LuaExposedObject):
-    def __init__(self, lua, port, stack=[]):
-        self._lua = lua
-        self._port = port
-        self._stack = stack
-
-    def call(self, string):
-        if self._stack != []:
-            self._lua.error("Only the top RPC object supports literal calls.")
-        else:
-            rpc.callLiteral(self._port, string)
-
-    def __call__(self, *args):
-        if self._stack == []:
-            self._lua.error("Base RPCObject not callable.")
-        else:
-            rpc.call(self._port, self._stack, args)
-        return None
-
-    def __getattr__(self, key):
-        if hasattr(super(Lua_RPCObject, self), key):
-            return getattr(super(Lua_RPCObject, self), key)
-        else:
-            return Lua_RPCObject(self._lua, self._port, self._stack + [key])
-
-    def __getitem__(self, key):
-        return self.__getattr__(key)
 
 class Lua_Telnet(LuaExposedObject):
     # Constants
