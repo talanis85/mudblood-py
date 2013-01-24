@@ -12,6 +12,7 @@ SE = 240
 
 CMD_EOR = 239
 
+OPT_ECHO = 1
 OPT_EOR = 25
 
 class TelnetEvent(event.Event):
@@ -23,6 +24,9 @@ class TelnetEvent(event.Event):
 
     def __str__(self):
         return "TelnetEvent: cmd={} option={} data={}".format(self.cmd, self.option, self.data)
+
+    def __eq__(self, other):
+        return (isinstance(other, TelnetEvent) and self.cmd == other.cmd and self.option == other.option and self.data == other.data)
 
 class TCPSocket(object):
     def __init__(self):

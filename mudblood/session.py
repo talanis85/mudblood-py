@@ -38,6 +38,8 @@ class Session(event.Source):
         self.rpc = None
         self.script = script
 
+        self.local_echo = True
+
     def start(self):
         if self.script:
             self.log("Loading {}".format(self.script), "info")
@@ -101,6 +103,13 @@ class Session(event.Source):
 
         elif isinstance(ev, telnet.TelnetEvent):
             self.put(event.LogEvent("Received Telneg {}".format(ev)))
+
+            if ev.option == telnet.OPT_ECHO:
+                if ev.cmd == telnet.WILL:
+                    self.local_echo = True
+                elif ev.cmd == telnet.WONT:
+                    self.local_echo = False
+
             self.luaHook("telneg", ev.cmd, ev.option, ev.data)
 
         elif isinstance(ev, rpc.RPCEvent):
