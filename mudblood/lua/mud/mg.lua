@@ -35,15 +35,24 @@ end
 -------------------- PUBLIC FUNCTIONS ----------------------------------------
 ------------------------------------------------------------------------------
 
-function M.setup(guild, mm)
+--{{{
+function M.setup(guild, seer, mm)
     M.mm = mm
+
+    if seer == true then
+        M.seer = true
+    else
+        M.seer = false
+    end
 
     M.base.setup()
 
     if guild == "tanjian" then
         M.tanjian.setup()
-    elseif guild == "klerus" then
+    elseif guild == "klerus" or guild == "kleriker" then
         M.klerus.setup()
+    elseif guild == "kaempfer" or guild == "trves" then
+        M.kaempfer.setup()
     end
 
     M.mapper.setup()
@@ -61,11 +70,13 @@ function M.focus(name)
         return M.base.focus
     end
 end
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- CALLBACKS -----------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 function M.base.onReport()
     if M.mm then
         print(string.format("LP: %d | KP: %d", M.stats.lp, M.stats.kp))
@@ -73,11 +84,13 @@ function M.base.onReport()
         status(string.format("LP: %d | KP: %d", M.stats.lp, M.stats.kp))
     end
 end
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- GENERAL -------------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 function M.base.setup()
     tlRecv:add(M.base.report.trigger2, "report", 200)
     tlRecv:add(M.base.fightTriggers, "fight")
@@ -102,7 +115,7 @@ function M.base.setup()
     tlSend:add(M.base.sendLogger, "logger", -1000)
 
     nmap("<E>q", quit)
-    nmap("<E>`", function () prompt("focus: ", function (f) M.focus(f); print("Fokus: " .. f) end) end)
+    nmap("<E>`", function () prompt("focus: ", function (f) M.focus(f); info("Fokus: " .. f) end) end)
 
     M.base.focus = ""
 end
@@ -200,11 +213,13 @@ M.base.fitnessTrigger = triggers.line_func("Defense", function (l)
 
     return nil, false, false
 end)
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- FARBEN --------------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 M.base.talkTriggers = triggers.TriggerList.create()
 
 -- Ebenen
@@ -281,11 +296,13 @@ M.base.fightTriggers = triggers.line_func("Attack", function (l)
 
     return nil, false, false
 end)
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- MAPPING -------------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 function M.room.blocker(direction, name)
     roomOnExit(direction, function ()
         directSend("knuddel " .. name)
@@ -297,11 +314,13 @@ function M.room.blocker(direction, name)
         end
     end)
 end
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- MAPPER --------------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 M.mapper = {}
 
 M.mapper.mode = "fixed"
@@ -394,6 +413,10 @@ M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
 end)
 
 function M.mapper.costFunction(r, e)
+    if M.seer ~= true and string.match(e.getName(), "^t ") then
+        return -1
+    end
+
     if e.getUserdata('level') and e.getUserdata('level') >= M.mapper.walklevel then
         return -1
     else
@@ -456,11 +479,13 @@ function M.mapper.printRoomInfoLong()
     end
     info("Ausgaenge: " .. ausg)
 end
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- TEAMKAMPF -----------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 M.team = {}
 
 M.team.team = {}
@@ -550,11 +575,13 @@ M.team.recvTriggers:add(triggers.gsub("Die Angst ist staerker als Du", function 
         end
     end
 end))
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- HORDE ---------------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 M.horde = {}
 
 M.horde.sendTriggers = triggers.TriggerList.create()
@@ -578,11 +605,13 @@ M.horde.sendTriggers:add(triggers.line_func("autofollow", function (l)
         end
     end
 end))
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- TANJIAN -------------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 M.tanjian = {}
 M.tanjian.stats = {
     meditation = 0,
@@ -724,11 +753,13 @@ end
 function M.tanjian.spells.clanspell()
     M.base.spell("kageodori %f", 2)
 end
+--}}}
 
 ------------------------------------------------------------------------------
 -------------------- KLERIKER ------------------------------------------------
 ------------------------------------------------------------------------------
 
+--{{{
 M.klerus = {}
 
 M.klerus.spells = {}
@@ -806,5 +837,38 @@ end
 function M.klerus.spells.goetterzorn()
     M.base.spell("goetterzorn %f")
 end
+--}}}
+
+------------------------------------------------------------------------------
+-------------------- KAEMPFER ------------------------------------------------
+------------------------------------------------------------------------------
+
+--{{{
+M.kaempfer = {}
+M.kaempfer.spells = {}
+
+function M.kaempfer.setup()
+    nmap("<F1>", M.kaempfer.spells.fokus)
+
+    nmap("<F5>", M.kaempfer.spells.schildparade)
+
+    nmap("<F9>", M.kaempfer.spells.kampftritt)
+end
+
+-- Spells
+
+function M.kaempfer.spells.kampftritt()
+    M.base.spell("kampftritt %f")
+end
+
+function M.kaempfer.spells.schildparade()
+    M.base.spell("schildparade")
+end
+
+function M.kaempfer.spells.fokus()
+    M.base.spell("fokus %f")
+end
+--}}}
+
 
 return M
