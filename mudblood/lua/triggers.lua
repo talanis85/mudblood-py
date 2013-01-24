@@ -196,7 +196,11 @@ function M.TriggerList:query(l)
         local ret = nil
         local rem = false
         local fire = false
-        ret, fire, rem = copy[i]:query(l)
+        if type(l) == "string" then
+            ret, fire, rem = copy[i]:query(stripColors(l))
+        else
+            ret, fire, rem = copy[i]:query(l)
+        end
         if fire then
             gfire = true
         end
@@ -299,9 +303,9 @@ function M.TriggerList:repr()
         end
 
         if t.name then
-            ret = ret .. i .. " (" .. t.name .. "): " .. rep .. "\n"
+            ret = ret .. i .. " (" .. t.name .. ", " .. t.priority .. "): " .. rep .. "\n"
         else
-            ret = ret .. i .. ": " .. rep .. "\n"
+            ret = ret .. i .. " (" .. t.priority .. "): " .. rep .. "\n"
         end
     end
     return ret
