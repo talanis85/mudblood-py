@@ -7,8 +7,7 @@ import sys
 import os
 import glob
 
-screens_available = ['ttyscreen', 'tbscreen', 'pgscreen', 'serial', 'wxscreen', 'tkscreen']
-screens = ['ttyscreen', 'tbscreen', 'pgscreen', 'serial', 'wxscreen', 'tkscreen']
+screens_available = ['ttyscreen', 'tbscreen', 'wxscreen']
 
 configuration = {
         'name': "mudblood",
@@ -19,6 +18,8 @@ configuration = {
         }
  
 if "py2exe" in sys.argv:
+    screens = ['wxscreen']
+
     import py2exe
 
     sys.path.append("C:\\Programme\\Microsoft Visual Studio 9.0\\VC\\redist\\x86\\Microsoft.VC90.CRT")
@@ -57,6 +58,8 @@ if "py2exe" in sys.argv:
         **configuration
     )
 else:
+    screens = ['ttyscreen', 'tbscreen', 'wxscreen']
+
     print("Using Distribute...")
 
     setup(
