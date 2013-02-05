@@ -861,12 +861,17 @@ function M.kaempfer.setup()
     nmap("<F5>", M.kaempfer.spells.schildparade)
 
     nmap("<F9>", M.kaempfer.spells.kampftritt)
+    nmap("<F10>", M.kaempfer.spells.schildstoss)
 end
 
 -- Spells
 
 function M.kaempfer.spells.kampftritt()
     M.base.spell("kampftritt %f")
+end
+
+function M.kaempfer.spells.schildstoss()
+    M.base.spell("schildstoss %f")
 end
 
 function M.kaempfer.spells.schildparade()
