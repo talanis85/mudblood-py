@@ -414,6 +414,10 @@ M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
             info("mapper: Neuen Raum gebaut.")
         end
     end
+
+    if M.mapper.mode == "move" then
+        return false
+    end
 end)
 
 function M.mapper.costFunction(r, e)
