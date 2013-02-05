@@ -37,6 +37,9 @@ class Terminal(object):
     def erase_line(self):
         self._dofunc('ERASE_LINE')
 
+    def cursor_up(self):
+        self._dofunc('CURSOR_UP')
+
 class Terminfo(object):
     def __init__(self, name):
         self.name = name
@@ -116,6 +119,7 @@ class Terminfo(object):
                 'ENTER_KEYPAD': "\033[?1h\033=",
                 'EXIT_KEYPAD': "\033[?1l\033>",
                 'ERASE_LINE': "\033[2K",
+                'CURSOR_UP': "\033[1A",
             }},
         'rxvt-unicode': (
             ["\033[11~","\033[12~","\033[13~","\033[14~","\033[15~","\033[17~","\033[18~","\033[19~","\033[20~","\033[21~","\033[23~","\033[24~","\033[2~","\033[3~","\033[7~","\033[8~","\033[5~","\033[6~","\033[A","\033[B","\033[D","\033[C", 0],
