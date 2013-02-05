@@ -23,6 +23,8 @@ M.room = {}
 M.base = {}
 M.base.report = {}
 
+M.keyprefix = "<E>"
+
 local tlRecv = triggers.TriggerList.create()
 local tlSend = triggers.TriggerList.create()
 local tlTimer = triggers.TriggerList.create()
@@ -36,8 +38,9 @@ end
 ------------------------------------------------------------------------------
 
 --{{{
-function M.setup(guild, seer, mm)
+function M.setup(guild, prefix, seer, mm)
     M.mm = mm
+    M.keyprefix = prefix
 
     if seer == true then
         M.seer = true
@@ -114,8 +117,8 @@ function M.base.setup()
     tlRecv:add(M.base.recvLogger, "logger", -1000)
     tlSend:add(M.base.sendLogger, "logger", -1000)
 
-    nmap("<E>q", quit)
-    nmap("<E>`", function () prompt("focus: ", function (f) M.focus(f); info("Fokus: " .. f) end) end)
+    nmap(M.keyprefix .. "q", quit)
+    nmap(M.keyprefix .. "`", function () prompt("focus: ", function (f) M.focus(f); info("Fokus: " .. f) end) end)
 
     M.base.focus = ""
 end
@@ -365,21 +368,22 @@ function M.mapper.setup()
     mapper.pre_walk = function () directSend("ultrakurz") end
     mapper.post_walk = function () directSend("lang\nschau") end
 
-    nmap("<E>f", function () prompt("fly: ", M.mapper.fly) end)
-    nmap("<E>w", function () prompt("walk: ", M.mapper.walk) end)
-    nmap("<E><TAB>b", M.mapper.walkBack)
+    nmap(M.keyprefix .. "f", function () prompt("fly: ", M.mapper.fly) end)
+    nmap(M.keyprefix .. "w", function () prompt("walk: ", M.mapper.walk) end)
+    nmap(M.keyprefix .. "<TAB>b", M.mapper.walkBack)
 
-    nmap("<E><TAB>d", function () prompt('walklevel: ', function (l) M.mapper.walklevel = tonumber(l) end) end)
+    nmap(M.keyprefix .. "<TAB>d", function () prompt('walklevel: ', function (l) M.mapper.walklevel = tonumber(l) end) end)
 
-    nmap("<E><TAB>mf", function () M.mapper.mode = "fixed"; info("mapper: Modus fixed") end)
-    nmap("<E><TAB>ma", function () M.mapper.mode = "auto"; info("mapper: Modus auto") end)
-    nmap("<E><TAB>mn", function () M.mapper.mode = "node"; info("mapper: Modus node") end)
-    nmap("<E><TAB>mo", function () M.mapper.mode = "off"; info("mapper: Modus off") end)
+    nmap(M.keyprefix .. "<TAB>mf", function () M.mapper.mode = "fixed"; info("mapper: Modus fixed") end)
+    nmap(M.keyprefix .. "<TAB>ma", function () M.mapper.mode = "auto"; info("mapper: Modus auto") end)
+    nmap(M.keyprefix .. "<TAB>mn", function () M.mapper.mode = "node"; info("mapper: Modus node") end)
+    nmap(M.keyprefix .. "<TAB>mo", function () M.mapper.mode = "off"; info("mapper: Modus off") end)
+    nmap(M.keyprefix .. "<TAB>mm", function () M.mapper.mode = "move"; info("mapper: Modus move") end)
 
     if M.mm then
-        nmap("<E><TAB><TAB>", M.mapper.printRoomInfo)
+        nmap(M.keyprefix .. "<TAB><TAB>", M.mapper.printRoomInfo)
     else
-        nmap("<E><TAB><TAB>", function () map.visible = (not map.visible) end)
+        nmap(M.keyprefix .. "<TAB><TAB>", function () map.visible = (not map.visible) end)
     end
 end
 
