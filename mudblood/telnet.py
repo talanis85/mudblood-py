@@ -2,18 +2,33 @@ import socket
 from mudblood import event
 
 IAC = 255
+
+EOR = 239
+SE = 240
+NOP = 241
+DM = 242
+BRK = 243
+IP = 244
+AO = 245
+AYT = 246
+EC = 247
+EL = 248
+GA = 249
+
+SB = 250
 WILL = 251
 WONT = 252
 DO = 253
 DONT = 254
-NOP = 241
-SB = 250
-SE = 240
 
-CMD_EOR = 239
 
 OPT_ECHO = 1
+OPT_SUPPRESS_GA = 3
+OPT_TIMING_MARK = 6
+OPT_TTYPE = 24
 OPT_EOR = 25
+OPT_NAWS = 31
+OPT_LINEMODE = 34
 
 class TelnetEvent(event.Event):
     def __init__(self, cmd, option=None, data=None):
