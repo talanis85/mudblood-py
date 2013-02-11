@@ -4,6 +4,7 @@ import codecs
 import traceback
 
 from mudblood import linebuffer
+from mudblood import window
 from mudblood import event
 from mudblood import map
 from mudblood import colors
@@ -58,6 +59,8 @@ class Lua(object):
         g.map = Lua_Map(self)
 
         g.markPrompt = self.markPrompt
+
+        g.screen = self.session.master.screen.getLuaScreen(self)
 
     def destroy(self):
         try:
@@ -141,13 +144,13 @@ class Lua(object):
     def directSend(self, data):
         self.session.send(data)
 
-    def echo(self, ob):
+    def echo(self, ob, buf='main'):
         if isinstance(ob, colors.AString):
-            self.session.echo(ob)
+            self.session.echo(ob, buf)
         elif isinstance(ob, basestring):
-            self.session.echo(ansi.Ansi().parseToAString(ob))
+            self.session.echo(ansi.Ansi().parseToAString(ob), buf)
         else:
-            self.session.echo(colors.AString(str(ob)))
+            self.session.echo(colors.AString(str(ob)), buf)
 
     def stripColors(self, string):
         if not isinstance(string, basestring):
@@ -301,12 +304,8 @@ class Lua_Map(LuaExposedObject):
     def addRoom(self):
         return Lua_Map_Room(self._lua, self._lua.session.map.addRoom().id)
 
-    def getVisible(self):
-        return self._lua.session.mapWindow.visible
-    def setVisible(self, v):
-        self._lua.session.mapWindow.visible = v
-
-    visible = property(getVisible, setVisible)
+    def visible(self, v):
+        self._lua.session.put(event.ScreenConfigEvent("map.visible", v))
 
     def getDirections(self):
         return self._lua.lua.table(**self._lua.session.map.dirConfig)
@@ -358,6 +357,9 @@ class Lua_Map(LuaExposedObject):
 
         with open(filename, "w") as f:
             self._lua.session.map.save(f)
+
+    def invalidateWeightCache(self):
+        self._lua.session.map.invalidateWeightCache()
 
 class Lua_Map_Room(LuaExposedObject):
     def __init__(self, lua, rid):

@@ -7,7 +7,7 @@ import sys
 import os
 import glob
 
-screens_available = ['ttyscreen', 'tbscreen', 'wxscreen']
+screens_available = ['ttyscreen', 'tbscreen', 'wxscreen', 'pgscreen']
 
 configuration = {
         'name': "mudblood",

@@ -16,7 +16,6 @@ class ModalScreen(screen.Screen):
         # Create the mode manager
         self.modeManager = modes.ModeManager("normal", {
             "normal": self.normalMode,
-            "console": self.consoleMode,
             "lua": self.luaMode,
             "prompt": self.promptMode,
             })
@@ -39,14 +38,10 @@ class NormalMode(modes.BufferMode):
                 self.clearBuffer()
             elif key == keys.KEY_CTRL_BACKSLASH:
                 self.screen.put(event.ModeEvent("lua"))
-            elif key == keys.KEY_ESC:
-                self.screen.put(event.ModeEvent("console"))
             elif key == keys.KEY_PGUP:
-                self.screen.master.session.windows[0].scroll += 20
+                self.screen.moveScroll('main', 20)
             elif key == keys.KEY_PGDN:
-                self.screen.master.session.windows[0].scroll -= 20
-                if self.screen.master.session.windows[0].scroll < 0:
-                    self.screen.master.session.windows[0].scroll = 0
+                self.screen.moveScroll('main', -20)
             else:
                 super(NormalMode, self).onKey(key)
         else:
@@ -57,13 +52,6 @@ class NormalMode(modes.BufferMode):
                 self.screen.put(event.InputEvent(bindret))
             else:
                 self.screen.put(event.LogEvent("Invalid binding.", "err"))
-
-class ConsoleMode(modes.Mode):
-    def onKey(self, key):
-        if key == keys.KEY_ESC:
-            self.screen.put(event.ModeEvent("normal"))
-        else:
-            super(ConsoleMode, self).onKey(key)
 
 class LuaMode(modes.BufferMode):
     def onKey(self, key):

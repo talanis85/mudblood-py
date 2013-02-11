@@ -133,6 +133,8 @@ class Map(object):
 
         self.currentRoom = 0
 
+        self.weightCache = {}
+
         self._nextRid = 1
 
     def load(self, f):
@@ -268,7 +270,11 @@ class Map(object):
             for d,e in self.rooms[roomid].getEdges().items():
                 if e.dest.id not in visited:
                     if weightFunction:
-                        weight = weightFunction(roomid, d)
+                        if (roomid, d) in self.weightCache:
+                            weight = self.weightCache[(roomid, d)]
+                        else:
+                            weight = weightFunction(roomid, d)
+                            self.weightCache[(roomid, d)] = weight
                     else:
                         weight = e.weight
 
@@ -276,6 +282,9 @@ class Map(object):
                         heapq.heappush(queue, (length + e.weight, e.dest.id, path + (d,)))
 
         return None
+
+    def invalidateWeightCache(self):
+        self.weightCache = {}
 
     def goto(self, id):
         self.currentRoom = id

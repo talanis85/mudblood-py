@@ -41,6 +41,7 @@ function M.walk(room, weightFunction)
     walk_semaphore = 0
     local status, err = coroutine.resume(walker, room, weightFunction)
     if status ~= true then
+        walker = nil
         error(err)
     end
 end

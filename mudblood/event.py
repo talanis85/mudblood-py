@@ -149,6 +149,16 @@ class ResizeEvent(Event):
         self.w = w
         self.h = h
 
+class GridResizeEvent(Event):
+    """
+    Signals that the screen size has changed.
+    Emitted by: Screen
+    """
+    def __init__(self, w, h):
+        super(GridResizeEvent, self).__init__()
+        self.w = w
+        self.h = h
+
 class ModeEvent(Event):
     """
     Requests to change screen mode.

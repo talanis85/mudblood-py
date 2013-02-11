@@ -29,6 +29,8 @@ local tlRecv = triggers.TriggerList.create()
 local tlSend = triggers.TriggerList.create()
 local tlTimer = triggers.TriggerList.create()
 
+local tlRecvVolatile = triggers.TriggerList.create()
+
 local function info(str)
     print(" " .. colors.Green .. str .. colors.Off)
 end
@@ -64,6 +66,8 @@ function M.setup(guild, prefix, seer, mm)
     ctxGlobal.recvTriggers:add(tlRecv)
     ctxGlobal.sendTriggers:add(tlSend)
     ctxGlobal.timers:add(tlTimer)
+
+    ctxGlobal.recvTriggers:add(tlRecvVolatile)
 end
 
 function M.focus(name)
@@ -72,6 +76,10 @@ function M.focus(name)
     else
         return M.base.focus
     end
+end
+
+function M.addvolatile(t)
+    tlRecvVolatile:add(t)
 end
 --}}}
 
@@ -104,9 +112,11 @@ function M.base.setup()
 
     -- EOR telneg
     events.register("telneg", function (cmd, option, data)
-        if cmd == telnet.WILL and option == telnet.DO_EOR then
-            telnet.negDo(telnet.DO_EOR)
+        print("Telneg: cmd=" .. tostring(cmd) .. ", option=" .. tostring(option) .. ", data=" .. tostring(data), "telnet")
+        if cmd == telnet.WILL and option == telnet.OPT_EOR then
+            telnet.negDo(telnet.OPT_EOR)
         elseif cmd == telnet.EOR then
+            tlRecvVolatile:clear()
             markPrompt()
         end
     end)
@@ -372,7 +382,10 @@ function M.mapper.setup()
     nmap(M.keyprefix .. "w", function () prompt("walk: ", M.mapper.walk) end)
     nmap(M.keyprefix .. "<TAB>b", M.mapper.walkBack)
 
-    nmap(M.keyprefix .. "<TAB>d", function () prompt('walklevel: ', function (l) M.mapper.walklevel = tonumber(l) end) end)
+    nmap(M.keyprefix .. "<TAB>d", function () prompt('walklevel: ', function (l)
+        M.mapper.walklevel = tonumber(l)
+        map.invalidateWeightCache()
+    end) end)
 
     nmap(M.keyprefix .. "<TAB>mf", function () M.mapper.mode = "fixed"; info("mapper: Modus fixed") end)
     nmap(M.keyprefix .. "<TAB>ma", function () M.mapper.mode = "auto"; info("mapper: Modus auto") end)
@@ -383,7 +396,7 @@ function M.mapper.setup()
     if M.mm then
         nmap(M.keyprefix .. "<TAB><TAB>", M.mapper.printRoomInfo)
     else
-        nmap(M.keyprefix .. "<TAB><TAB>", function () map.visible = (not map.visible) end)
+        nmap(M.keyprefix .. "<TAB><TAB>", function () screen.windowVisible('map', (not screen.windowVisible('map'))) end)
     end
 end
 
@@ -550,6 +563,16 @@ end))
 
 M.team.recvTriggers:add(triggers.gsub("(%w+) hat das Team verlassen", function (n)
     M.team.team[n] = nil
+end))
+
+M.team.sendTriggers:add(triggers.gsub("^g$", function ()
+    M.team.team = {}
+    tlRecvVolatile:add(triggers.gsub("^[ %*] (%w+)", function (n)
+        if n == "Name" or n == "Tutszt" then
+            return
+        end
+        M.team.team[n] = false
+    end))
 end))
 
 M.team.recvTriggers:add(triggers.gsub("^(%w+) nickt", function (n)

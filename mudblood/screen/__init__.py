@@ -1,3 +1,4 @@
+from mudblood import event
 import threading
 import Queue
 
@@ -25,6 +26,11 @@ class KeystringScreenEvent(ScreenEvent):
     def __init__(self, keystring):
         self.keystring = keystring
 
+#class ConfigScreenEvent(ScreenEvent):
+#    def __init__(self, option, value):
+#        self.option = option
+#        self.value = value
+
 class DestroyScreenEvent(ScreenEvent):
     pass
 
@@ -35,6 +41,7 @@ class Screen(event.Source):
         self.thread = threading.Thread(target=self.run)
         self.queue = Queue.Queue()
         self.master = master
+        self.scroll_states = {}
 
     def start(self):
         self.thread.start()
@@ -68,6 +75,7 @@ class Screen(event.Source):
 
     def updateSize(self, w, h):
         self.queue.put(SizeScreenEvent(w, h))
+        self.put(event.GridResizeEvent(w, h))
 
     def setMode(self, mode, **kwargs):
         self.queue.put(ModeScreenEvent(mode, kwargs))
@@ -77,3 +85,16 @@ class Screen(event.Source):
 
     def keystring(self, keystring):
         self.queue.put(KeystringScreenEvent(keystring))
+
+    def moveScroll(self, name, value):
+        if name not in self.scroll_states:
+            self.scroll_states[name] = 0
+
+        self.scroll_states[name] += value
+        if self.scroll_states[name] < 0:
+            self.scroll_states[name] = 0
+
+    def getScroll(self, name):
+        if name not in self.scroll_states:
+            return 0
+        return self.scroll_states[name]

@@ -8,6 +8,7 @@ from mudblood import keys
 from mudblood import colors
 from mudblood import map
 from mudblood import window
+from mudblood import lua
 
 import subprocess
 import tempfile
@@ -39,6 +40,41 @@ class TermboxSource(event.AsyncSource):
         elif t == termbox.EVENT_RESIZE:
             return event.ResizeEvent(w, h)
 
+class Lua_Screen(lua.LuaExposedObject):
+    def __init__(self, luaob, screen):
+        super(Lua_Screen, self).__init__(luaob)
+        self._screen = screen
+
+    def windowVisible(self, name, value=None):
+        if value is None:
+            if name == 'main':
+                return True
+            return (name in self._screen.windows)
+        else:
+            if name == 'main':
+                return
+
+            if value == False and name in self._screen.windows:
+                self._screen.windows.remove(name)
+
+            if value == True:
+                if name not in self._screen.windows:
+                    self._screen.windows.append(name)
+                if name not in self._screen.window_sizes:
+                    self._screen.window_sizes[name] = 10
+
+    def windowSize(self, name, value=None):
+        if value == None:
+            if name in self._screen.window_sizes:
+                return self._screen.window_sizes[name]
+            else:
+                return None
+        else:
+            self._screen.window_sizes[name] = value
+
+    def scroll(self, value, name='main'):
+        self._screen.moveScroll(name, value)
+
 class TermboxScreen(modalscreen.ModalScreen):
     def __init__(self, master):
         super(TermboxScreen, self).__init__(master)
@@ -57,6 +93,13 @@ class TermboxScreen(modalscreen.ModalScreen):
         self.source = TermboxSource(self.tb)
         self.source.start()
         self.source.bind(self.master.drain)
+
+        self.map_visible = False
+        self.windows = []
+        self.window_sizes = {}
+
+    def getLuaScreen(self, lua):
+        return Lua_Screen(lua, self)
 
     def run(self):
         while True:
@@ -84,70 +127,50 @@ class TermboxScreen(modalscreen.ModalScreen):
         self.console.linebuffer.echo(text)
 
     def doUpdate(self):
-        x = 0
-        y = 0
-
-        windowArea = self.height - 2
-
-        windows = None
-
-        # Draw session windows
-        # If in consoleMode, draw mudblood windows
-
-        if self.modeManager.getMode() == "console":
-            windows = [self.console]
-        else:
-            windows = self.master.session.windows
+        mainlb = self.master.session.linebuffers['main']
 
         self.tb.clear()
 
-        ratioWhole = 0.0
-        for w in windows:
-            if w.visible:
-                ratioWhole += w.ratio
+        # Draw main linebuffer
 
-        for w in reversed(windows):
-            if w.visible:
-                wh = int(windowArea * (w.ratio / ratioWhole))
+        mainarea = self.height - 2
 
-                if w.type == "linebuffer":
-                    if w.scroll > 0:
-                        fixh = 5
-                        lines = w.linebuffer.render(self.width, w.scroll, wh - fixh) \
-                              + w.linebuffer.render(self.width, 0, fixh) \
-                              + [self.master.session.getPromptLine()]
-                    else:
-                        lines = w.linebuffer.render(self.width, w.scroll, wh) \
-                              + [self.master.session.getPromptLine()]
-                    if len(lines) < wh:
-                        y += wh - len(lines)
+        x = 0
+        y = 0
 
-                    for l in lines:
-                        x = 0
-                        for c in l:
-                            if c[1] == "\t":
-                                x += 8 - (x % 8)
-                            else:
-                                if not (ord(c[1]) >= ord(" ") and ord(c[1]) <= ord("~")):
-                                    continue
-                                    #self.tb.close()
-                                    #raise Exception("Non printable char {}. Line is: '{}'".format(ord(c[1]), [ord(x[1]) for x in l]))
+        scroll = self.getScroll('main')
 
-                                self.tb.change_cell(x, y, ord(c[1]), c[0][0] | c[0][2], c[0][1])
-                                x += 1
-                        y += 1
-                elif w.type == "map":
-                    m = map.AsciiMapRenderer(w.map).render(self.width, wh)
-                    for i in range(self.width * wh):
-                        self.tb.change_cell(x, y, m[i], colors.DEFAULT, colors.DEFAULT)
-                        x += 1
-                        if x == self.width:
-                            x = 0
-                            y += 1
+        lines = None
+        if scroll > 0:
+            fixh = 5
+            lines = mainlb.render(self.width, scroll, mainarea - fixh) \
+                  + mainlb.render(self.width, 0, fixh) \
+                  + [self.master.session.getPromptLine()]
+        else:
+            lines = mainlb.render(self.width, scroll, mainarea) \
+                  + [self.master.session.getPromptLine()]
+        if len(lines) < mainarea:
+            y += mainarea - len(lines)
+
+        for l in lines:
+            x = 0
+            for c in l:
+                if c[1] == "\t":
+                    x += 8 - (x % 8)
+                else:
+                    if not (ord(c[1]) >= ord(" ") and ord(c[1]) <= ord("~")):
+                        continue
+                        #self.tb.close()
+                        #raise Exception("Non printable char {}. Line is: '{}'".format(ord(c[1]), [ord(x[1]) for x in l]))
+
+                    self.tb.change_cell(x, y, ord(c[1]), c[0][0] | c[0][2], c[0][1])
+                    x += 1
+            y += 1
 
         y -= 1
 
-        # Prompt line
+        # Draw Prompts
+
         if self.modeManager.getMode() == "normal":
             buf = self.normalMode.getBuffer()
             cur = self.normalMode.getCursor()
@@ -210,6 +233,73 @@ class TermboxScreen(modalscreen.ModalScreen):
             self.tb.change_cell(x, y, ord(c), termbox.DEFAULT, termbox.DEFAULT)
             x += 1
         
+        # WINDOWS
+
+        ratioWhole = 0.0
+        for w in self.windows:
+            ratioWhole += self.window_sizes[w]
+
+        windowArea = self.height / 2
+
+        x = 0
+        y = 0
+        for w in self.windows:
+            x = 0
+
+            #wh = int(windowArea * (self.window_sizes[w] / ratioWhole))
+            wh = self.window_sizes[w]
+            if w == 'map':
+                m = map.AsciiMapRenderer(self.master.session.map).render(self.width, wh)
+                for i in range(self.width * wh):
+                    self.tb.change_cell(x, y, m[i], colors.DEFAULT, colors.DEFAULT)
+                    x += 1
+                    if x == self.width:
+                        x = 0
+                        y += 1
+            else:
+                lines = []
+
+                if w in self.master.session.linebuffers:
+                    lb = self.master.session.linebuffers[w]
+                    scroll = self.getScroll(w)
+                    if scroll > 0:
+                        fixh = 5
+                        lines = lb.render(self.width, scroll, wh - fixh) \
+                              + lb.render(self.width, 0, fixh)
+                    else:
+                        lines = lb.render(self.width, scroll, wh)
+                if len(lines) < wh:
+                    for i in range(wh - len(lines)):
+                        x = 0
+                        while x < self.width:
+                            self.tb.change_cell(x, y, ord(' '), termbox.DEFAULT, termbox.DEFAULT)
+                            x += 1
+                        y += 1
+
+                for l in lines:
+                    x = 0
+                    for c in l:
+                        if c[1] == "\t":
+                            x += 8 - (x % 8)
+                        else:
+                            if not (ord(c[1]) >= ord(" ") and ord(c[1]) <= ord("~")):
+                                continue
+                                #self.tb.close()
+                                #raise Exception("Non printable char {}. Line is: '{}'".format(ord(c[1]), [ord(x[1]) for x in l]))
+
+                            self.tb.change_cell(x, y, ord(c[1]), c[0][0] | c[0][2], c[0][1])
+                            x += 1
+                    while x < self.width:
+                        self.tb.change_cell(x, y, ord(' '), termbox.DEFAULT, termbox.DEFAULT)
+                        x += 1
+                    y += 1
+            x = 0
+            while x < self.width:
+                self.tb.change_cell(x, y, ord('-'), termbox.DEFAULT, termbox.DEFAULT)
+                x += 1
+            y += 1
+                
+
         self.tb.present()
 
     def editor(self, content):

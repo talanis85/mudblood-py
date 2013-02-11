@@ -3,7 +3,7 @@ import os
 import time
 import argparse
 
-screens = ['tbscreen', 'ttyscreen', 'wxscreen'];
+screens = ['tbscreen', 'ttyscreen', 'wxscreen', 'pgscreen'];
 
 def main():
     from mudblood.main import Mudblood
@@ -64,7 +64,7 @@ class Mudblood(object):
             except:
                 raise Exception("Could not create configuration directory.")
 
-        self.session = session.Session(config['script'])
+        self.session = session.Session(self, config['script'])
         self.session.bind(self.drain)
         self.session.start()
 

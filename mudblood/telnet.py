@@ -1,4 +1,6 @@
 import socket
+import struct
+import json
 from mudblood import event
 
 IAC = 255
@@ -42,6 +44,11 @@ class TelnetEvent(event.Event):
 
     def __eq__(self, other):
         return (isinstance(other, TelnetEvent) and self.cmd == other.cmd and self.option == other.option and self.data == other.data)
+
+class GMCPEvent(event.Event):
+    def __init__(self, data):
+        self.module, _, d = data.partition(" ")
+        self.data = json.loads(d)
 
 class TCPSocket(object):
     def __init__(self):
@@ -102,7 +109,11 @@ class Telnet(event.AsyncSource):
                         data.append(c)
                 elif state == 4:
                     if c == SE:
-                        self.put(TelnetEvent(command, option, data))
+                        if option == 201:
+                            # TODO: Which encoding?
+                            self.put(GMCPEvent(data=data.decode('utf8')))
+                        else:
+                            self.put(TelnetEvent(command, option, data))
                         state = 0
                     else:
                         data.append(IAC)
@@ -134,6 +145,10 @@ class Telnet(event.AsyncSource):
         self.file.write(b)
 
     def sendSubneg(self, option, data):
-        b = bytes([IAC, SB, option]) + bytes(data) + bytes([IAC, SE])
+        b = bytearray([IAC, SB, option]) + bytearray(data) + bytearray([IAC, SE])
         self.put(event.LogEvent("Telnet: Sending {}".format(list(b)), "debug"))
         self.file.write(b)
+
+    def sendNaws(self, w, h):
+        self.sendSubneg(OPT_NAWS, struct.pack('!HH', w, h))
+

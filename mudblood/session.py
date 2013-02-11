@@ -18,10 +18,12 @@ class Session(event.Source):
     A session is one single connection to a server. Every session has its own socket,
     linebuffer, map and lua-runtime.
     """
-    def __init__(self, script=None):
+    def __init__(self, master, script=None):
         super(Session, self).__init__()
+        
+        self.master = master
 
-        self.lb = linebuffer.Linebuffer()
+        self.linebuffers = {}
 
         self.lua = lua.Lua(self, package.getResourceFilename("lua", "?.lua"))
 
@@ -33,12 +35,13 @@ class Session(event.Source):
         self.userStatus = ""
         self.encoding = "utf8"
         self.map = map.Map()
-        self.mapWindow = window.MapWindow(self.map)
-        self.windows = [window.LinebufferWindow(self.lb), self.mapWindow]
         self.rpc = None
         self.script = script
 
         self.local_echo = True
+
+        self.width = 0
+        self.height = 0
 
     def start(self):
         if self.script:
@@ -109,8 +112,17 @@ class Session(event.Source):
                     self.local_echo = True
                 elif ev.cmd == telnet.WONT:
                     self.local_echo = False
+            elif ev.option == telnet.OPT_NAWS and ev.cmd == telnet.DO:
+                self.telnet.sendIAC(telnet.WILL, telnet.OPT_NAWS)
+                self.telnet.sendNaws(self.width, self.height)
 
             self.luaHook("telneg", ev.cmd, ev.option, ev.data)
+
+        elif isinstance(ev, event.GridResizeEvent):
+            self.width = ev.w
+            self.height = ev.h
+
+            self.telnet.sendNaws(ev.w, ev.h)
 
         elif isinstance(ev, rpc.RPCEvent):
             try:
@@ -153,8 +165,11 @@ class Session(event.Source):
     def getStatusLine(self):
         return (self.lua.eval("mapper.walking()") and "WALKING" or "NOT WALKING")
     
-    def echo(self, string):
-        self.lb.echo(string)
+    def echo(self, string, lb='main'):
+        if lb not in self.linebuffers:
+            self.linebuffers[lb] = linebuffer.Linebuffer()
+
+        self.linebuffers[lb].echo(string)
 
     def luaHook(self, hook, *args):
         ret = None
