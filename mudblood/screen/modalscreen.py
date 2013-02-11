@@ -8,7 +8,6 @@ class ModalScreen(screen.Screen):
         super(ModalScreen, self).__init__(master)
 
         self.normalMode = NormalMode(self)
-        self.consoleMode = ConsoleMode(self)
         self.luaMode = LuaMode(self)
         self.mapMode = MapMode(self)
         self.promptMode = PromptMode(self)
