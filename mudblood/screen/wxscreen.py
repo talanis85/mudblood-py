@@ -79,6 +79,9 @@ class WxScreen(modalscreen.ModalScreen):
         self.updateScreen()
 
     def doUpdate(self, ev):
+        if self.master.session is None:
+            return
+
         lines = self.master.session.linebuffers['main'].lines
 
         pos = self.text.XYToPosition(0, self.text.GetNumberOfLines()-1)
