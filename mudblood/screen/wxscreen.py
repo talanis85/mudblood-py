@@ -46,6 +46,8 @@ class WxScreen(modalscreen.ModalScreen):
 
         self.ready = True
 
+        self.updateScreen()
+
         self.app.MainLoop()
 
     def destroy(self):
@@ -77,7 +79,7 @@ class WxScreen(modalscreen.ModalScreen):
         self.updateScreen()
 
     def doUpdate(self, ev):
-        lines = self.master.session.windows[0].linebuffer.lines
+        lines = self.master.session.linebuffers['main'].lines
 
         pos = self.text.XYToPosition(0, self.text.GetNumberOfLines()-1)
         self.text.Remove(pos, pos+100)

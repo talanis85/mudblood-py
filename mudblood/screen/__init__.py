@@ -98,3 +98,6 @@ class Screen(event.Source):
         if name not in self.scroll_states:
             return 0
         return self.scroll_states[name]
+    
+    def getLuaScreen(self, luaob):
+        return None
