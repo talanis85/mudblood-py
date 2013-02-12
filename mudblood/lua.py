@@ -38,6 +38,7 @@ class Lua(object):
 
         g.ctxGlobal = Lua_Context(self)
         g.ctxRoom = Lua_Context(self)
+        g.ctxPrompt = Lua_Context(self)
 
         g.reload = self.reload
         g.quit = self.session.quit
@@ -107,15 +108,21 @@ class Lua(object):
 
     def triggerSend(self, line):
         g = self.lua.globals()
-        g.triggers.queryListsAndSend.coroutine(self.lua.table(g.ctxRoom.sendTriggers, g.ctxGlobal.sendTriggers), line).send(None)
+        g.triggers.queryListsAndSend.coroutine(
+                self.lua.table(g.ctxPrompt.sendTriggers, g.ctxRoom.sendTriggers, g.ctxGlobal.sendTriggers),
+                line).send(None)
     
     def triggerRecv(self, line):
         g = self.lua.globals()
-        g.triggers.queryListsAndEcho.coroutine(self.lua.table(g.ctxRoom.recvTriggers, g.ctxGlobal.recvTriggers), line).send(None)
+        g.triggers.queryListsAndEcho.coroutine(
+                self.lua.table(g.ctxPrompt.recvTriggers, g.ctxRoom.recvTriggers, g.ctxGlobal.recvTriggers),
+                line).send(None)
 
     def triggerBlock(self, line):
         g = self.lua.globals()
-        g.triggers.queryLists.coroutine(self.lua.table(g.ctxRoom.blockTriggers, g.ctxGlobal.blockTriggers), line).send(None)
+        g.triggers.queryLists.coroutine(
+                self.lua.table(g.ctxPrompt.blockTriggers, g.ctxRoom.blockTriggers, g.ctxGlobal.blockTriggers),
+                line).send(None)
 
     def triggerTime(self):
         g = self.lua.globals()
@@ -198,6 +205,7 @@ class Lua(object):
 
     def markPrompt(self):
         self.session.markPrompt()
+        self.lua.globals().ctxPrompt.reset()
 
 class LuaExposedObject(object):
     def __init__(self, lua):
