@@ -233,6 +233,7 @@ class Lua_Context(LuaExposedObject):
 
         # Must be a pure lua function as we cannot yield across the Lua-Python boundary.
         self.wait = lua.eval("function (self, trigs) return triggers.yield(trigs, self.recvTriggers) end")
+        self.waitBlock = lua.eval("function (self, trigs) return triggers.yield(trigs, self.blockTriggers) end")
         self.waitSend = lua.eval("function (self, trigs) return triggers.yield(trigs, self.sendTriggers) end")
         self.waitTime = lua.eval("function (self, trigs) return triggers.yield(trigs, self.timers) end")
 
