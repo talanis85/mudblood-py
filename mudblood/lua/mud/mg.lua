@@ -235,14 +235,35 @@ end)
 --{{{
 M.base.talkTriggers = triggers.TriggerList.create()
 
+local function mgTalkTrigger(startpattern, color)
+    return triggers.Trigger.create(
+        startpattern,
+        function (self, l)
+            if type(l) ~= "string" then return nil, false, false end
+
+            if self.active == true then
+                if string.match(l, "^ ") then
+                    return color .. l .. colors.Off, true, false
+                end
+            end
+
+            if string.match(l, startpattern) then
+                self.active = true
+                return color .. l .. colors.Off, true, false
+            end
+
+            self.active = false
+        end)
+end
+
 -- Ebenen
-M.base.talkTriggers:add(triggers.color_line("^%[[^%]]+:[^%]]+%]", colors.Blue))
+M.base.talkTriggers:add(mgTalkTrigger("^%[[^%]]+:[^%]]+%]", colors.Blue))
 
 -- Teile mit
-M.base.talkTriggers:add(triggers.color_line("^%w+ teilt Dir mit: ", colors.Blue))
-M.base.talkTriggers:add(triggers.color_line("^Dein Freund %w+ teilt Dir mit: ", colors.Blue))
-M.base.talkTriggers:add(triggers.color_line("^Deine Freundin %w+ teilt Dir mit: ", colors.Blue))
-M.base.talkTriggers:add(triggers.color_line("^.* aus der Ferne", colors.Blue))
+M.base.talkTriggers:add(mgTalkTrigger("^%w+ teilt Dir mit: ", colors.Blue))
+M.base.talkTriggers:add(mgTalkTrigger("^Dein Freund %w+ teilt Dir mit: ", colors.Blue))
+M.base.talkTriggers:add(mgTalkTrigger("^Deine Freundin %w+ teilt Dir mit: ", colors.Blue))
+M.base.talkTriggers:add(mgTalkTrigger("^.* aus der Ferne", colors.Blue))
 
 M.base.fightTriggers = triggers.line_func("Attack", function (l)
     local attack = {
