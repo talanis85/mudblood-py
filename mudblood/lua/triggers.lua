@@ -282,6 +282,28 @@ function M.queryListsAndEcho(lists, al)
     return true
 end
 
+function M.queryListsBlock(lists, al)
+    local l = tostring(al)
+    local gr2 = false
+    local gr3 = false
+    local changed = false
+    mapper.P()
+    for _, tlist in ipairs(lists) do
+        local r1,r2,r3 = tlist:query(l)
+        if r1 == false then
+            mapper.V()
+            return true
+        elseif r1 ~= nil then
+            l = r1
+            changed = true
+        end
+        if r2 then gr2 = true end
+        if r3 then gr3 = true end
+    end
+    mapper.V()
+    return true
+end
+
 --- String representation of the TriggerList.
 -- Returns a textual description of the TriggerList. The list is traversed
 -- recursively and the whole tree of trigger lists is returned.

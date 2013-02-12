@@ -30,6 +30,7 @@ class Session(event.Source):
         self.bindings = keys.Bindings()
         self.telnet = None
         self.lastLine = ""
+        self.lastBlock = ""
         self.promptLine = ""
         self.ansi = ansi.Ansi()
         self.userStatus = ""
@@ -76,6 +77,10 @@ class Session(event.Source):
                         return
 
             lines = text.split("\n")
+
+            for l in lines:
+                self.lastBlock += l.strip() + " "
+
             firstLine = self.lastLine + lines[0]
             if len(lines) > 1:
                 parsedLines = []
@@ -161,6 +166,17 @@ class Session(event.Source):
             return self.getLastLine()
         else:
             return ansi.Ansi().parseToAString(self.promptLine)
+
+    def markPrompt(self):
+        self.promptLine = self.lastLine
+        self.lastLine = ""
+
+        try:
+            ret = self.lua.triggerRecvBlock(ansi.Ansi().parseToAString(self.lastBlock))
+        except Exception as e:
+            self.log("Lua error in recv block trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
+
+        self.lastBlock = ""
 
     def getStatusLine(self):
         return (self.lua.eval("mapper.walking()") and "WALKING" or "NOT WALKING")
