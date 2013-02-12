@@ -113,9 +113,9 @@ class Lua(object):
         g = self.lua.globals()
         g.triggers.queryListsAndEcho.coroutine(self.lua.table(g.ctxRoom.recvTriggers, g.ctxGlobal.recvTriggers), line).send(None)
 
-    def triggerRecvBlock(self, line):
+    def triggerBlock(self, line):
         g = self.lua.globals()
-        g.triggers.queryListsBlock.coroutine(self.lua.table(g.ctxRoom.recvBlockTriggers, g.ctxGlobal.recvBlockTriggers), line).send(None)
+        g.triggers.queryLists.coroutine(self.lua.table(g.ctxRoom.blockTriggers, g.ctxGlobal.blockTriggers), line).send(None)
 
     def triggerTime(self):
         g = self.lua.globals()
@@ -233,7 +233,7 @@ class Lua_Context(LuaExposedObject):
     def reset(self):
         self.sendTriggers = self._lua.lua.globals().triggers.TriggerList.create()
         self.recvTriggers = self._lua.lua.globals().triggers.TriggerList.create()
-        self.recvBlockTriggers = self._lua.lua.globals().triggers.TriggerList.create()
+        self.blockTriggers = self._lua.lua.globals().triggers.TriggerList.create()
         self.timers = self._lua.lua.globals().triggers.TriggerList.create()
 
 class Lua_Telnet(LuaExposedObject):

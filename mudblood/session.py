@@ -172,9 +172,9 @@ class Session(event.Source):
         self.lastLine = ""
 
         try:
-            ret = self.lua.triggerRecvBlock(ansi.Ansi().parseToAString(self.lastBlock))
+            ret = self.lua.triggerBlock(ansi.Ansi().parseToAString(self.lastBlock))
         except Exception as e:
-            self.log("Lua error in recv block trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
+            self.log("Lua error in block trigger: {}\n{}".format(str(e), traceback.format_exc()), "err")
 
         self.lastBlock = ""
 

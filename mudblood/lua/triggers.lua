@@ -282,11 +282,10 @@ function M.queryListsAndEcho(lists, al)
     return true
 end
 
-function M.queryListsBlock(lists, al)
+function M.queryLists(lists, al)
     local l = tostring(al)
     local gr2 = false
     local gr3 = false
-    local changed = false
     mapper.P()
     for _, tlist in ipairs(lists) do
         local r1,r2,r3 = tlist:query(l)
@@ -295,7 +294,6 @@ function M.queryListsBlock(lists, al)
             return true
         elseif r1 ~= nil then
             l = r1
-            changed = true
         end
         if r2 then gr2 = true end
         if r3 then gr3 = true end
