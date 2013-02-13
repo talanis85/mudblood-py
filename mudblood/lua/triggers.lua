@@ -212,6 +212,9 @@ function M.TriggerList:query(l)
                 end
             end
             grem = true
+            if self.one_shot == true then
+                break
+            end
         end
         if ret ~= nil then
             l = ret
