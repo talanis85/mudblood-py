@@ -10,6 +10,7 @@ from mudblood import map
 from mudblood import colors
 from mudblood import ansi
 from mudblood import flock
+from mudblood import telnet
 
 class Lua(object):
     def __init__(self, session, packagePath):
@@ -292,6 +293,23 @@ class Lua_Telnet(LuaExposedObject):
     def negSubneg(self, option, data):
         if not self._lua.session.telnet: raise Exception("Not connected")
         self._lua.session.telnet.sendSubneg(option, data)
+
+    def gmcpObject(self, module, ob):
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        self._lua.session.telnet.sendGMCP(telnet.GMCPEvent(module=module, obj=dict(ob)))
+    def gmcpArray(self, module, ob):
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        arr = []
+        for i in ob.values():
+            arr.append(i)
+        self._lua.session.telnet.sendGMCP(telnet.GMCPEvent(module=module, obj=arr))
+    def gmcpValue(self, module, ob):
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        self._lua.session.telnet.sendGMCP(telnet.GMCPEvent(module=module, obj=ob))
+
+    def gmcpFlag(self, module):
+        if not self._lua.session.telnet: raise Exception("Not connected")
+        self._lua.session.telnet.sendGMCP(telnet.GMCPEvent(module=module))
 
 class Lua_Map(LuaExposedObject):
     NORTH       = map.NORTH

@@ -9,7 +9,8 @@ local events = {
     disconnect = {},
     heartbeat = {},
     room = {},
-    telneg = {}
+    telneg = {},
+    gmcp = {}
 }
 
 function M.register(name, fun)

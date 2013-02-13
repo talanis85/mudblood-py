@@ -46,9 +46,31 @@ class TelnetEvent(event.Event):
         return (isinstance(other, TelnetEvent) and self.cmd == other.cmd and self.option == other.option and self.data == other.data)
 
 class GMCPEvent(event.Event):
-    def __init__(self, data):
-        self.module, _, d = data.partition(" ")
-        self.data = json.loads(d)
+    def __init__(self, data=None, module=None, obj=None):
+        super(GMCPEvent, self).__init__()
+
+        self.module = None
+        self.data = None
+
+        if data is not None:
+            self.module, _, d = data.partition(" ")
+            if d == "":
+                self.data = None
+            else:
+                self.data = json.loads(d)
+
+        if module is not None:
+            self.module = module
+            self.data = obj
+
+    def dump(self):
+        if self.module is None:
+            return ""
+
+        if self.data is None:
+            return self.module
+        else:
+            return "{} {}".format(self.module, json.dumps(self.data))
 
 class TCPSocket(object):
     def __init__(self):
@@ -71,70 +93,79 @@ class Telnet(event.AsyncSource):
         super(Telnet, self).__init__()
         self.file = file
 
+        self.telnet_parsed = bytearray()
+        self.telnet_state = 0
+        self.telnet_command = 0
+        self.telnet_option = 0
+        self.telnet_data = bytearray()
+
     def poll(self):
         ret = self.file.read(1024)
         if ret == None:
             self.running = False
             self.put(event.DisconnectEvent())
         else:
-            parsed = bytearray()
-            state = 0
-            command = 0
-            option = 0
-            data = bytearray()
+            #parsed = bytearray()
+            #state = 0
+            #command = 0
+            #option = 0
+            #data = bytearray()
 
             for d in ret:
                 # Remove in Python 3
                 c = ord(d)
 
-                if state == 1:
+                if self.telnet_state == 1:
                     if c >= 240:
-                        command = c
-                        state = 2
+                        self.telnet_command = c
+                        self.telnet_state = 2
                     else:
-                        command = c
-                        self.put(TelnetEvent(command, None, None))
-                        state = 0
-                elif state == 2:
-                    option = c
-                    if command == SB:
-                        state = 3
+                        self.telnet_command = c
+                        self.put(TelnetEvent(self.telnet_command, None, None))
+                        self.telnet_state = 0
+                elif self.telnet_state == 2:
+                    self.telnet_option = c
+                    if self.telnet_command == SB:
+                        self.telnet_state = 3
                     else:
-                        self.put(TelnetEvent(command, option, None))
-                        state = 0
-                elif state == 3:
+                        self.put(TelnetEvent(self.telnet_command, self.telnet_option, None))
+                        self.telnet_state = 0
+                elif self.telnet_state == 3:
                     if c == IAC:
-                        state = 4
+                        self.telnet_state = 4
                     else:
-                        data.append(c)
-                elif state == 4:
+                        self.telnet_data.append(c)
+                elif self.telnet_state == 4:
                     if c == SE:
-                        if option == 201:
+                        if self.telnet_option == 201:
                             # TODO: Which encoding?
-                            self.put(GMCPEvent(data=data.decode('utf8')))
+                            self.put(TelnetEvent(self.telnet_command, self.telnet_option, self.telnet_data))
+                            self.put(GMCPEvent(data=self.telnet_data.decode('utf8')))
                         else:
-                            self.put(TelnetEvent(command, option, data))
-                        state = 0
+                            self.put(TelnetEvent(self.telnet_command, self.telnet_option, self.telnet_data))
+                        self.telnet_state = 0
                     else:
-                        data.append(IAC)
-                        data.append(c)
+                        self.telnet_data.append(IAC)
+                        self.telnet_data.append(c)
                 elif c == IAC:
-                    if len(parsed) > 0:
-                        self.put(event.RawEvent(bytes(parsed)))
+                    if len(self.telnet_parsed) > 0:
+                        self.put(event.RawEvent(bytes(self.telnet_parsed)))
 
-                    parsed = bytearray()
-                    command = 0
-                    option = 0
-                    data = bytearray()
+                    self.telnet_parsed = bytearray()
+                    self.telnet_command = 0
+                    self.telnet_option = 0
+                    self.telnet_data = bytearray()
 
-                    state = 1
+                    self.telnet_state = 1
                 elif c == ord("\r"):
                     pass
                 elif c == 0x1b or c == ord("\n") or (c >= ord(" ") and c <= ord("~")):
-                    parsed.append(c)
+                    self.telnet_parsed.append(c)
 
-            if len(parsed) > 0:
-                self.put(event.RawEvent(bytes(parsed)))
+            if len(self.telnet_parsed) > 0:
+                self.put(event.RawEvent(bytes(self.telnet_parsed)))
+
+            self.telnet_parsed = bytearray()
 
     def write(self, buf):
         self.file.write(buf)
@@ -148,6 +179,9 @@ class Telnet(event.AsyncSource):
         b = bytearray([IAC, SB, option]) + bytearray(data) + bytearray([IAC, SE])
         self.put(event.LogEvent("Telnet: Sending {}".format(list(b)), "debug"))
         self.file.write(b)
+
+    def sendGMCP(self, gmcp):
+        self.sendSubneg(201, gmcp.dump().encode('utf8'))
 
     def sendNaws(self, w, h):
         self.sendSubneg(OPT_NAWS, struct.pack('!HH', w, h))

@@ -123,6 +123,9 @@ class Session(event.Source):
 
             self.luaHook("telneg", ev.cmd, ev.option, ev.data)
 
+        elif isinstance(ev, telnet.GMCPEvent):
+            self.luaHook("gmcp", ev.module, ev.data)
+
         elif isinstance(ev, event.GridResizeEvent):
             self.width = ev.w
             self.height = ev.h
