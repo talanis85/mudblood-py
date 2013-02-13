@@ -2,6 +2,15 @@ local M = {}
 
 
 M.stats = {
+    name = "Jemand",
+    guild = "Abenteurer",
+    race = "Mensch",
+    presay = "",
+    title = "",
+    wizlevel = 0,
+    level = 1,
+    guildlevel = 1,
+
     lp = 0,
     lp_max = 0,
     lp_diff = 0,
@@ -11,11 +20,16 @@ M.stats = {
     vorsicht = 0,
     fluchtrichtung = "",
     gift = 0,
+    gift_max = 1,
     taub = 0,
     frosch = 0,
     blind = 0,
     gesinnung = "",
     erfahrung = 0,
+    a_con = 0,
+    a_int = 0,
+    a_dex = 0,
+    a_str = 0
 }
 
 M.room = {}
@@ -226,6 +240,51 @@ M.base.fitnessTrigger = triggers.line_func("Defense", function (l)
 
     return nil, false, false
 end)
+--}}}
+
+------------------------------------------------------------------------------
+-------------------- GMCP ----------------------------------------------------
+------------------------------------------------------------------------------
+
+--{{{
+M.gmcp = {}
+
+function M.gmcp.setup()
+    screen.windowVisible("telnet", true)
+    screen.windowSize("telnet", 40)
+
+    events.register("gmcp", function (module, data)
+        if module == "MG.char.base" then
+            M.stats.name = data['name']
+            M.stats.guild = data['guild']
+            M.stats.race = data['race']
+            M.stats.presay = data['presay']
+            M.stats.title = data['title']
+            M.stats.wizlevel = data['wizlevel']
+        elseif module == "MG.char.info" then
+            M.stats.level = data['level']
+            M.stats.guildlevel = data['guildlevel']
+        elseif module == "MG.char.maxvitals" then
+            M.stats.lp_max = data['max_hp']
+            M.stats.kp_max = data['max_sp']
+            M.stats.gift_max = data['max_poison']
+        elseif module == "MG.char.attributes" then
+            M.stats.a_con = data['con']
+            M.stats.a_int = data['int']
+            M.stats.a_dex = data['dex']
+            M.stats.a_str = data['str']
+        elseif module == "MG.char.vitals" then
+            M.stats.lp = data['hp']
+            M.stats.kp = data['sp']
+        end
+    end)
+
+    telnet.negDo(201)
+    telnet.gmcpObject("Core.Hello", {client="mudblood", version="0.1"})
+    telnet.gmcpArray("Core.Supports.Set", {"MG.char 1"})
+    telnet.gmcpValue("Core.Debug", 1)
+end
+
 --}}}
 
 ------------------------------------------------------------------------------
