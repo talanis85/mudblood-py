@@ -21,6 +21,7 @@ Depending on the UI module, some more packages are required:
 TODO
 ----
 
+- Documentation!
 - Proper build script that can resolve dependencies
 - Binary package for Windows
 - Updated unit tests
