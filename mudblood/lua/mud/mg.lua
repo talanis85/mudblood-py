@@ -286,6 +286,14 @@ function M.gmcp.setup()
         elseif module == "MG.char.vitals" then
             M.stats.lp = data['hp']
             M.stats.kp = data['sp']
+        elseif module == "comm.channel" then
+
+            -- Workaround. To be removed.
+            if type(data) == "number" then
+                return
+            end
+
+            print(string.format(colors.Blue .. string.sub(data['msg'], 1, -2) .. colors.Off))
         end
 
         M.onReport()
@@ -293,7 +301,7 @@ function M.gmcp.setup()
 
     telnet.negDo(201)
     telnet.gmcpObject("Core.Hello", {client="mudblood", version="0.1"})
-    telnet.gmcpArray("Core.Supports.Set", {"MG.char 1"})
+    telnet.gmcpArray("Core.Supports.Set", {"MG.char 1", "comm.channel 1"})
     telnet.gmcpValue("Core.Debug", 1)
 end
 
