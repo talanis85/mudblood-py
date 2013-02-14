@@ -229,6 +229,8 @@ class TermboxScreen(modalscreen.ModalScreen):
         x = 0
         y += 1
         x += (self.width - len(self.master.session.userStatus)) / 2
+        if x < 0:
+            x = 0
         for c in self.master.session.userStatus:
             self.tb.change_cell(x, y, ord(c), termbox.DEFAULT, termbox.DEFAULT)
             x += 1
