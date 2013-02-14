@@ -10,6 +10,7 @@ M.stats = {
     wizlevel = 0,
     level = 1,
     guildlevel = 1,
+    guildtitle = "",
 
     lp = 0,
     lp_max = 0,
@@ -271,7 +272,8 @@ function M.gmcp.setup()
             M.stats.wizlevel = data['wizlevel']
         elseif module == "MG.char.info" then
             M.stats.level = data['level']
-            M.stats.guildlevel = data['guildlevel']
+            M.stats.guildlevel = data['guild_level']
+            M.stats.guildtitle = data['guild_title']
         elseif module == "MG.char.maxvitals" then
             M.stats.lp_max = data['max_hp']
             M.stats.kp_max = data['max_sp']
