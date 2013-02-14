@@ -104,9 +104,17 @@ end
 --{{{
 function M.base.onReport()
     if M.mm then
-        print(string.format("LP: %d | KP: %d", M.stats.lp, M.stats.kp))
+        print(string.format("%s (%s) | %d / %d | %d / %d | v:%d (%s) | g:%d/%d",
+                    M.stats.name, M.stats.guild,
+                    M.stats.lp, M.stats.lp_max, M.stats.kp, M.stats.kp_max,
+                    M.stats.vorsicht, M.stats.fluchtrichtung,
+                    M.stats.gift, M.stats.gift_max))
     else
-        status(string.format("LP: %d | KP: %d", M.stats.lp, M.stats.kp))
+        status(string.format("%s (%s) | %d / %d | %d / %d | v:%d (%s) | g:%d/%d",
+                    M.stats.name, M.stats.guild,
+                    M.stats.lp, M.stats.lp_max, M.stats.kp, M.stats.kp_max,
+                    M.stats.vorsicht, M.stats.fluchtrichtung,
+                    M.stats.gift, M.stats.gift_max))
     end
 end
 --}}}
@@ -277,6 +285,8 @@ function M.gmcp.setup()
             M.stats.lp = data['hp']
             M.stats.kp = data['sp']
         end
+
+        M.onReport()
     end)
 
     telnet.negDo(201)
@@ -760,9 +770,9 @@ function M.tanjian.onReport()
     if M.mm then
         info(string.format("LP: %d | KP: %d", M.stats.lp, M.stats.kp))
     else
-        status(string.format("%d / %d | %d / %d | %d (%s) | %s %s %s %s %s %s %s %s | %s | %s | %d",
+        status(string.format("%d / %d | %d / %d | v:%d (%s) | g:%d/%d | %s %s %s %s %s %s %s | %s | %s | %d",
                     M.stats.lp, M.stats.lp_max, M.stats.kp, M.stats.kp_max, M.stats.vorsicht, M.stats.fluchtrichtung,
-                    M.stats.gift == 1 and "G" or " ",
+                    M.stats.gift, M.stats.gift_max,
                     M.stats.blind == 1 and "B" or " ",
                     M.stats.taub == 1 and "T" or " ",
                     M.stats.frosch == 1 and "F" or " ",
