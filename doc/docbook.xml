@@ -1,0 +1,265 @@
+<?xml version="1.0"?>
+<!-- vim: set wrap tw=100 fo+=t: -->
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://docbook.org/xml/4.2/docbookx.dtd">
+
+<book>
+    <bookinfo>
+        <title>Mudblood Manual</title>
+        <author>Philip Kranz</author>
+    </bookinfo>
+
+    <preface>
+        <title>About Mudblood</title>
+
+        <para>
+            Mudblood is a flexible and ergonomic MUD client for Unix and Windows. It features a
+            fully keyboard-based UI and an extensive scripting system.
+        </para>
+    </preface>
+
+    <chapter>
+        <title>Quick Start</title>
+        <section>
+            <title>Installation</title>
+            <section>
+                <title>Linux</title>
+            </section>
+            <section>
+                <title>Windows</title>
+            </section>
+        </section>
+
+        <section>
+            <title>Setting Up A Game</title>
+            <para>
+                When you start mudblood without arguments, there will not happen much. You could
+                enter lua mode and connect to a server manually, but the recommended way is to
+                create a profile that defines all the scripting you need for a specific game or a
+                specific character.
+            </para>
+            <para>
+                Mudblood searches for profiles in
+                <programlisting>HOME/.config/mudblood</programlisting> where HOME is your home
+                directory in Unix or your "My Files" folder in Windows. A profile is essentially a
+                directory that contains at least one file called "profile.lua" - that file is
+                executed when the profile is loaded.
+            </para>
+            <para>
+                Let's assume we want to connect to a game at "bloodmud.example.com" (Port 4711).
+                We already have a
+                character there called "Bloodlust". It seems like good practice to have a directory
+                for every game, with subdirectories for each character in that game, so first we
+                create a directory called
+                <programlisting>HOME/.config/mudblood/bloodmud</programlisting>
+            </para>
+            <para>
+                Next, we add a subdirectory called
+                <programlisting>HOME/.config/mudblood/bloodmud/bloodlust</programlisting>
+                That subdirectory is the profile for the character "Bloodlust" at the game
+                "Bloodmud".
+            </para>
+            <para>
+                Finally, we create a file called "profile.lua" in that profile directory with the
+                following contents:
+                <programlisting><![CDATA[connect("bloodmud.example.com", 4711)]]></programlisting>
+                The function connect() simply connects to a server. The first argument is the
+                hostname, the second argument is the port number.
+            </para>
+            <para>
+                Now we can call mudblood with the profile as argument, in our case
+                <programlisting>mudblood bloodmud/bloodlust</programlisting> and it will
+                automatically connect to the server on startup.
+            </para>
+        </section>
+    </chapter>
+
+    <chapter>
+        <title>User Interface</title>
+
+        <para>
+            The mudblood user interface is controlled solely with the keyboard. Mouse input is not
+            and will not be supported. However, with some training you will notice that mudblood can
+            be configured to do a pile of things with just a few keystrokes.
+        </para>
+
+        <section>
+            <title>Input Modes</title>
+
+            <para>
+                Mudblood knows several input modes. Each mode follows its own set of rules.
+            </para>
+
+            <section>
+                <title>Normal Mode</title>
+
+                <para>
+                    This is probably the most important mode. In normal mode, everything you type
+                    is sent directly to the game, except when there is a binding defined for your
+                    input. There are some pre-defined keyboard bindings in normal mode:
+                </para>
+
+                <itemizedlist>
+                    <listitem>RETURN - Send current line to game</listitem>
+                    <listitem>Ctrl-Backslash - Switch to Lua mode</listitem>
+                    <listitem>ESC - Cancel current binding</listitem>
+                </itemizedlist>
+
+                <para>
+                    Additional bindings in normal mode can be defined using nmap().
+                </para>
+
+                <example>
+                    <title>Adding a binding</title>
+                    <programlisting><![CDATA[nmap("\q", function () quit() end)]]></programlisting>
+                    <para>
+                        This creates a new binding on the key sequence Backslash, Q that quits
+                        mudblood.
+                    </para>
+                </example>
+            </section>
+
+            <section>
+                <title>Lua Mode</title>
+
+                <para>
+                    In Lua mode, you can execute any lua command that is defined in the global
+                    scope. Lua mode can be entered by pressing Ctrl-Backslash and can be left by
+                    hitting ESC.
+                </para>
+            </section>
+
+            <section>
+                <title>Prompt Mode</title>
+
+                <para>
+                    Prompt mode can be used as a simple way for scripts to read one line of input from
+                    the user. Prompt mode is entered using the prompt() function.
+                </para>
+
+                <example>
+                    <title>Using prompt mode</title>
+                    <programlisting><![CDATA[prompt("enter something: ", function (n)
+    print("You entered " .. n)
+end)]]></programlisting>
+                    <para>
+                        The first argument for prompt() is a text that is displayed before the
+                        prompt. The second argument is a function with one argument. That function
+                        is called, after the user pressed RETURN. When the user hits ESC, the
+                        function is not called.
+                    </para>
+                </example>
+            </section>
+        </section>
+    </chapter>
+
+    <chapter>
+        <title>Advanced Scripting</title>
+        <section>
+            <title>Triggers</title>
+        </section>
+        <section>
+            <title>Asynchronicity</title>
+        </section>
+        <section>
+            <title>The Mapper</title>
+        </section>
+    </chapter>
+
+    <appendix>
+        <title>MUD specific scripts</title>
+        <section>
+            <title>MorgenGrauen (german)</title>
+            <section>
+                <title>Einrichtung</title>
+                <para>
+                    Um das MorgenGrauen Modul zu verwenden, muss folgendes in die profile.lua
+                    eingefuegt werden:
+                    <programlisting><![CDATA[mg = require "mud.mg"
+    mg.setup("Charname", "\\", true/false)]]></programlisting>
+                    Das erste Argument fuer mg.setup() ist Dein Spielername. Das zweite Argument ist
+                    eine Taste oder Tastenfolge, die als Praefix fuer alle Tastaturbefehle dient, die
+                    das Modul vordefiniert. Das dritte Argument ist true, wenn der Charakter Seher
+                    ist und false wenn nicht.
+                </para>
+            </section>
+            <section>
+                <title>Keybindings</title>
+                <para>
+                    Das MG Modul belegt einige Tastaturbefehle vor. P muss im Folgenden durch das
+                    eingestellte Praefix ersetzt werden. Wenn auf das Kommando ein oder mehrere
+                    Pluszeichen (+) folgen, so liest das Kommando vor der Ausfuehrung noch Argumente
+                    (siehe Prompt Mode).
+                </para>
+                <section>
+                    <title>Allgemein</title>
+                    <itemizedlist>
+                        <listitem><userinput>Pq</userinput> Mudblood beenden.</listitem>
+                        <listitem><userinput>P`</userinput> Kampffokus setzen.</listitem>
+                    </itemizedlist>
+                </section>
+                <section>
+                    <title>Mapper</title>
+                    <itemizedlist>
+                        <listitem><userinput>P[TAB][TAB]</userinput>
+                            Mapanzeige ein-/ausschalten.</listitem>
+                        <listitem><userinput>Pf+</userinput>
+                            Fliegen. Setzt den aktuellen Raum im Mapper. Das Ziel kann als Tag
+                            oder Raumnummer angegeben werden.</listitem>
+                        <listitem><userinput>Pw+</userinput>
+                            Autowalk. Das Ziel kann als Tag oder Raumnummer angegeben
+                            werden.</listitem>
+                        <listitem><userinput>P[TAB]b</userinput>
+                            Walk-back. Laeuft nach einem Autowalk an den Ausgangspunkt
+                            zurueck.</listitem>
+                        <listitem><userinput>P[TAB]mo</userinput>
+                            Mappermodus: off. Deaktiviert den Mapper.</listitem>
+                        <listitem><userinput>P[TAB]mf</userinput>
+                            Mappermodus: fixed. Mapper ist aktiv, aber es werden keine neuen
+                            Raeume oder Ausgaenge erstellt.</listitem>
+                        <listitem><userinput>P[TAB]ma</userinput>
+                            Mappermodus: auto. Mapper ist aktiv und es werden ggf. neue Raeume
+                            erstellt.</listitem>
+                        <listitem><userinput>P[TAB]mn</userinput>
+                            Mappermodus: node. Mapper ist zwar aktiv, aber der aktuelle Raum wird
+                            nur durch Autowalk oder Fliegen gewechselt. Dieser Modus soll sehr grob 
+                            das Knotensystem von TF nachbilden.</listitem>
+                    </itemizedlist>
+                </section>
+            </section>
+        </section>
+    </appendix>
+
+    <appendix>
+        <title>Lua Reference</title>
+        <para>
+            Very incomplete list of predefined Lua functions. Complete LDoc reference coming soon.
+        </para>
+        <itemizedlist>
+            <listitem>
+                <synopsis>connect(host, port)</synopsis>
+                Connect to host.
+            </listitem>
+            <listitem>
+                <synopsis>quit()</synopsis>
+                Quit mudblood.
+            </listitem>
+            <listitem>
+                <synopsis>print(text, window='main')</synopsis>
+                Print text to given window.
+            </listitem>
+            <listitem>
+                <synopsis>send(text)</synopsis>
+                Send text to server.
+            </listitem>
+            <listitem>
+                <synopsis>reload()</synopsis>
+                Reload current profile.
+            </listitem>
+            <listitem>
+                <synopsis>status(text)</synopsis>
+                Set status line. If text is nil, return current status line.
+            </listitem>
+        </itemizedlist>
+    </appendix>
+</book>
+
