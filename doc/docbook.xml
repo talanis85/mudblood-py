@@ -175,11 +175,12 @@ end)]]></programlisting>
                     Um das MorgenGrauen Modul zu verwenden, muss folgendes in die profile.lua
                     eingefuegt werden:
                     <programlisting><![CDATA[mg = require "mud.mg"
-    mg.setup("Charname", "\\", true/false)]]></programlisting>
-                    Das erste Argument fuer mg.setup() ist Dein Spielername. Das zweite Argument ist
+mg.setup("abenteurer", "\\", true/false, true/false)]]></programlisting>
+                    Das erste Argument fuer mg.setup() ist Deine Gilde. Das zweite Argument ist
                     eine Taste oder Tastenfolge, die als Praefix fuer alle Tastaturbefehle dient, die
                     das Modul vordefiniert. Das dritte Argument ist true, wenn der Charakter Seher
-                    ist und false wenn nicht.
+                    ist und false wenn nicht. Das vierte Argument ist true, wenn der
+                    Screenreadermodus aktiviert sein soll.
                 </para>
             </section>
             <section>
@@ -250,6 +251,10 @@ end)]]></programlisting>
             <listitem>
                 <synopsis>send(text)</synopsis>
                 Send text to server.
+            </listitem>
+            <listitem>
+                <synopsis>nmap(keystring, function)</synopsis>
+                Add a new key binding in normal mode.
             </listitem>
             <listitem>
                 <synopsis>reload()</synopsis>
