@@ -180,8 +180,11 @@ class Lua(object):
 
         return ret
 
-    def prompt(self, text, call):
-        self.session.put(event.ModeEvent("prompt", text=text, call=call))
+    def prompt(self, text, call, completion=None):
+        if completion is not None:
+            completion = [v for v in completion.values()]
+
+        self.session.put(event.ModeEvent("prompt", text=text, call=call, completion=completion))
 
     def nmap(self, key, value=None):
         if value is None:
