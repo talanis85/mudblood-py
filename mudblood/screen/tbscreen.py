@@ -104,28 +104,25 @@ class TermboxScreen(modalscreen.ModalScreen):
 
     def run(self):
         while True:
-            try:
-                ev = self.nextEvent()
+            ev = self.nextEvent()
 
-                if ev is None:
-                    continue
+            if ev is None:
+                continue
 
-                if isinstance(ev, screen.UpdateScreenEvent):
-                    self.doUpdate()
-                elif isinstance(ev, screen.SizeScreenEvent):
-                    self.width, self.height = ev.w, ev.h
-                elif isinstance(ev, screen.DestroyScreenEvent):
-                    self.tb.close()
-                    self.doneEvent()
-                    break
-                elif isinstance(ev, screen.ModeScreenEvent):
-                    self.modeManager.setMode(ev.mode, **ev.args)
-                elif isinstance(ev, screen.KeyScreenEvent):
-                    self.modeManager.key(ev.key)
-
+            if isinstance(ev, screen.UpdateScreenEvent):
+                self.doUpdate()
+            elif isinstance(ev, screen.SizeScreenEvent):
+                self.width, self.height = ev.w, ev.h
+            elif isinstance(ev, screen.DestroyScreenEvent):
+                self.tb.close()
                 self.doneEvent()
-            except Exception as e:
-                self.log("DISPLAY ERROR: {}\n{}".format(str(e), traceback.format_exc()))
+                break
+            elif isinstance(ev, screen.ModeScreenEvent):
+                self.modeManager.setMode(ev.mode, **ev.args)
+            elif isinstance(ev, screen.KeyScreenEvent):
+                self.modeManager.key(ev.key)
+
+            self.doneEvent()
     
     def log(self, text):
         self.logbuffer.echo(text)
