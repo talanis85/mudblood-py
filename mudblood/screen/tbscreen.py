@@ -214,6 +214,12 @@ class TermboxScreen(modalscreen.ModalScreen):
             x = 0
             y += 1
 
+            sel, cl = self.promptMode.getCompletionInfo()
+            if cl != []:
+                self.displayCompletionList(x, y, 20, sel, cl)
+
+            x = 0
+
             for c in self.promptMode.getText():
                 self.tb.change_cell(x, y, ord(c), termbox.RED, termbox.DEFAULT)
                 x += 1
@@ -312,6 +318,36 @@ class TermboxScreen(modalscreen.ModalScreen):
                 
 
         self.tb.present()
+
+    def displayCompletionList(self, x, y, h, sel, cl):
+        clw = max([len(i) for i in cl])
+
+        start = 0
+        if h > len(cl):
+            h = len(cl)
+        elif h < len(cl):
+            if sel > h / 2:
+                start = sel - h / 2
+            if sel > len(cl) - h / 2:
+                start = len(cl) - h
+
+        y -= h
+
+        i = 0
+        for l in range(start, start+h):
+            x = 0
+
+            col = termbox.WHITE
+            if l == sel:
+                col = termbox.CYAN
+
+            for c in cl[l]:
+                self.tb.change_cell(x, y, ord(c), termbox.BLACK, col)
+                x += 1
+            while x < clw:
+                self.tb.change_cell(x, y, ord(' '), termbox.BLACK, col)
+                x += 1
+            y += 1
 
     def editor(self, content):
         ret = None

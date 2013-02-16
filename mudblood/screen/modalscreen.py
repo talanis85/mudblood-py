@@ -84,8 +84,8 @@ class PromptMode(modes.BufferMode):
     def getCall(self):
         return self.call
 
-    def getCompletionList(self):
-        return self.completion_list
+    def getCompletionInfo(self):
+        return self.completion_selection, self.completion_list
 
     def onEnter(self, text="", call=None, completion=None):
         self.call = call
