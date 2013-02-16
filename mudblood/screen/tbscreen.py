@@ -87,7 +87,7 @@ class TermboxScreen(modalscreen.ModalScreen):
         self.updateSize(self.tb.width(), self.tb.height())
 
         # Initialize the main linebuffer
-        self.console = window.LinebufferWindow(linebuffer.Linebuffer())
+        self.logbuffer = linebuffer.Linebuffer()
 
         # Create a source for user input
         self.source = TermboxSource(self.tb)
@@ -124,7 +124,7 @@ class TermboxScreen(modalscreen.ModalScreen):
             self.doneEvent()
     
     def log(self, text):
-        self.console.linebuffer.echo(text)
+        self.logbuffer.echo(text)
 
     def doUpdate(self):
         mainlb = self.master.session.linebuffers['main']
@@ -261,9 +261,14 @@ class TermboxScreen(modalscreen.ModalScreen):
             else:
                 lines = []
 
-                if w in self.master.session.linebuffers:
-                    lb = self.master.session.linebuffers[w]
-                    scroll = self.getScroll(w)
+                if w in self.master.session.linebuffers or w == "log":
+                    if w == "log":
+                        lb = self.logbuffer
+                        scroll = 0
+                    else:
+                        lb = self.master.session.linebuffers[w]
+                        scroll = self.getScroll(w)
+
                     if scroll > 0:
                         fixh = 5
                         lines = lb.render(self.width, scroll, wh - fixh) \
