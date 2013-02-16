@@ -21,6 +21,17 @@ KEY_ARROW_DOWN		= (0xFFFF-19)
 KEY_ARROW_LEFT		= (0xFFFF-20)
 KEY_ARROW_RIGHT		= (0xFFFF-21)
 
+KEY_NUMPAD0         = (0xFFFF-22)
+KEY_NUMPAD1         = (0xFFFF-23)
+KEY_NUMPAD2         = (0xFFFF-24)
+KEY_NUMPAD3         = (0xFFFF-25)
+KEY_NUMPAD4         = (0xFFFF-26)
+KEY_NUMPAD5         = (0xFFFF-27)
+KEY_NUMPAD6         = (0xFFFF-28)
+KEY_NUMPAD7         = (0xFFFF-29)
+KEY_NUMPAD8         = (0xFFFF-30)
+KEY_NUMPAD9         = (0xFFFF-31)
+
 KEY_CTRL_TILDE		= 0x00
 KEY_CTRL_2		= 0x00
 KEY_CTRL_A		= 0x01
@@ -85,6 +96,17 @@ class Bindings(object):
             "F10": KEY_F10,
             "F11": KEY_F11,
             "F12": KEY_F12,
+
+            "NUMPAD0": KEY_NUMPAD0,
+            "NUMPAD1": KEY_NUMPAD1,
+            "NUMPAD2": KEY_NUMPAD2,
+            "NUMPAD3": KEY_NUMPAD3,
+            "NUMPAD4": KEY_NUMPAD4,
+            "NUMPAD5": KEY_NUMPAD5,
+            "NUMPAD6": KEY_NUMPAD6,
+            "NUMPAD7": KEY_NUMPAD7,
+            "NUMPAD8": KEY_NUMPAD8,
+            "NUMPAD9": KEY_NUMPAD9,
             }
 
     def __init__(self):
