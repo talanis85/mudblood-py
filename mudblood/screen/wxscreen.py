@@ -13,6 +13,33 @@ DestroyEvent, EVT_DESTROY_EVENT = wx.lib.newevent.NewEvent()
 UpdateEvent, EVT_UPDATE_EVENT = wx.lib.newevent.NewEvent()
 ModeEvent, EVT_MODE_EVENT = wx.lib.newevent.NewEvent()
 
+keymap = {
+        ord('\r'):              ord('\n'),
+        wx.WXK_F1:              keys.KEY_F1,
+        wx.WXK_F2:              keys.KEY_F2,
+        wx.WXK_F3:              keys.KEY_F3,
+        wx.WXK_F4:              keys.KEY_F4,
+        wx.WXK_F5:              keys.KEY_F5,
+        wx.WXK_F6:              keys.KEY_F6,
+        wx.WXK_F7:              keys.KEY_F7,
+        wx.WXK_F8:              keys.KEY_F8,
+        wx.WXK_F9:              keys.KEY_F9,
+        wx.WXK_F10:             keys.KEY_F10,
+        wx.WXK_F11:             keys.KEY_F11,
+        wx.WXK_F12:             keys.KEY_F12,
+
+        wx.WXK_NUMPAD0:         keys.KEY_NUMPAD0,
+        wx.WXK_NUMPAD1:         keys.KEY_NUMPAD1,
+        wx.WXK_NUMPAD2:         keys.KEY_NUMPAD2,
+        wx.WXK_NUMPAD3:         keys.KEY_NUMPAD3,
+        wx.WXK_NUMPAD4:         keys.KEY_NUMPAD4,
+        wx.WXK_NUMPAD5:         keys.KEY_NUMPAD5,
+        wx.WXK_NUMPAD6:         keys.KEY_NUMPAD6,
+        wx.WXK_NUMPAD7:         keys.KEY_NUMPAD7,
+        wx.WXK_NUMPAD8:         keys.KEY_NUMPAD8,
+        wx.WXK_NUMPAD9:         keys.KEY_NUMPAD9,
+}
+
 def createScreen(master):
     return WxScreen(master)
 
@@ -72,8 +99,8 @@ class WxScreen(modalscreen.ModalScreen):
     def doKey(self, ev):
         key = ev.GetKeyCode()
 
-        if key == ord('\r'):
-            key = ord('\n')
+        if key in keymap:
+            key = keymap[key]
 
         self.modeManager.key(key)
         self.updateScreen()
