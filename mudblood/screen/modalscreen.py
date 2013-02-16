@@ -92,7 +92,7 @@ class PromptMode(modes.BufferMode):
         self.text = text
         self.completion = completion
 
-        self.completion_list = None
+        self.completion_list = []
         self.completion_selection = 0
 
     def onKey(self, key):
@@ -105,20 +105,20 @@ class PromptMode(modes.BufferMode):
             self.clearBuffer()
         elif key == ord("\t"):
             if self.completion:
-                if self.completion_list is None:
-                    self.completion_list = []
+                if self.completion_list == []:
                     self.completion_selection = 0
                     for v in self.completion:
                         if v.startswith(self._buffer):
                             self.completion_list.append(v)
                 else:
                     self.completion_selection = (self.completion_selection + 1) % len(self.completion_list)
-                self._buffer = self.completion_list[self.completion_selection]
-                self._cursor = len(self._buffer)
+                if self.completion_list != []:
+                    self._buffer = self.completion_list[self.completion_selection]
+                    self._cursor = len(self._buffer)
         else:
             super(PromptMode, self).onKey(key)
 
-            if self.completion_list is not None:
+            if self.completion_list != []:
                 self.completion_list = []
                 for v in self.completion:
                     if v.startswith(self._buffer):
