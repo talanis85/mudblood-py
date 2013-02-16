@@ -35,7 +35,7 @@ class NormalMode(modes.BufferMode):
 
                 self.screen.put(event.InputEvent(self.getBuffer(), display=True))
                 self.clearBuffer()
-            elif key == keys.KEY_CTRL_BACKSLASH:
+            elif key == ord('`'):
                 self.screen.put(event.ModeEvent("lua"))
             elif key == keys.KEY_PGUP:
                 self.screen.moveScroll('main', 20)
