@@ -10,7 +10,6 @@ from mudblood import ansi
 from mudblood import telnet
 from mudblood import keys
 from mudblood import map
-from mudblood import rpc
 from mudblood import package
 
 class Session(event.Source):
