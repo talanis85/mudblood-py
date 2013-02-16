@@ -159,6 +159,8 @@ class Telnet(event.AsyncSource):
                     self.telnet_state = 1
                 elif c == ord("\r"):
                     pass
+                elif c == ord("\b"):
+                    self.telnet_parsed = self.telnet_parsed[:-1]
                 elif c == 0x1b or c == ord("\n") or (c >= ord(" ") and c <= ord("~")):
                     self.telnet_parsed.append(c)
 
