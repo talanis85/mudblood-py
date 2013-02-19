@@ -70,6 +70,33 @@ class Lua_Screen(lua.LuaExposedObject):
         super(Lua_Screen, self).__init__(luaob)
         self._screen = screen
 
+    def windowVisible(self, name, value=None):
+        if value is None:
+            if name == 'main':
+                return True
+            return (name in self._screen.windows)
+        else:
+            if name == 'main':
+                return
+
+            if value == False and name in self._screen.windows:
+                self._screen.windows.remove(name)
+
+            if value == True:
+                if name not in self._screen.windows:
+                    self._screen.windows.append(name)
+                if name not in self._screen.window_sizes:
+                    self._screen.window_sizes[name] = 10
+
+    def windowSize(self, name, value=None):
+        if value == None:
+            if name in self._screen.window_sizes:
+                return self._screen.window_sizes[name]
+            else:
+                return None
+        else:
+            self._screen.window_sizes[name] = value
+
     def scroll(self, value, name='main'):
         self._screen.moveScroll(name, value)
 
@@ -82,6 +109,9 @@ class PygameScreen(modalscreen.ModalScreen):
 
         self.width = 1000
         self.height = 600
+
+        self.windows = []
+        self.window_sizes = {}
 
     def tick(self):
         pass
