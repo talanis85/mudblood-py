@@ -59,9 +59,9 @@ class LuaMode(modes.BufferMode):
         elif key == ord("\n"):
             self.addHistory()
 
+            self.screen.put(event.ModeEvent("normal"))
             self.screen.master.session.luaEval(self.getBuffer() + "\n")
             self.clearBuffer()
-            self.screen.put(event.ModeEvent("normal"))
         else:
             super(LuaMode, self).onKey(key)
 
