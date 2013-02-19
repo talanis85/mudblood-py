@@ -40,31 +40,16 @@ keymap = {
 def createScreen(master):
     return PygameScreen(master)
 
-class PygameSource(event.AsyncSource):
-    def __init__(self):
-        super(PygameSource, self).__init__()
+class Lua_Screen(lua.LuaExposedObject):
+    def __init__(self, luaob, screen):
+        super(Lua_Screen, self).__init__(luaob)
+        self._screen = screen
 
-    def poll(self):
-        try:
-            ev = pygame.event.wait()
-        except:
-            return None
+    def scroll(self, value, name='main'):
+        self._screen.moveScroll(name, value)
 
-        if ev.type == pygame.locals.QUIT:
-            return event.QuitEvent()
-        elif ev.type == pygame.locals.KEYDOWN:
-            k = None
-            if ev.key in keymap:
-                k = keymap[ev.key]
-            else:
-                if ev.unicode == "":
-                    return None
-                k = ord(ev.unicode)
-            return event.KeyEvent(k)
-        elif ev.type == pygame.locals.VIDEORESIZE:
-            return event.ResizeEvent(ev.w, ev.h)
-        elif ev.type == pygame.locals.VIDEOEXPOSE:
-            return None
+    def playMusic(self, filename):
+        pygame.mixer.Sound(filename).play(-1)
 
 class PygameScreen(modalscreen.ModalScreen):
     def __init__(self, master):
@@ -73,48 +58,70 @@ class PygameScreen(modalscreen.ModalScreen):
         self.width = 1000
         self.height = 600
 
+    def tick(self):
+        pass
+
+    def destroy(self):
+        pygame.event.post(pygame.event.Event(pygame.QUIT))
+
+    def updateScreen(self):
+        pygame.event.post(pygame.event.Event(pygame.VIDEOEXPOSE))
+
+    def setMode(self, mode, **kwargs):
+        pygame.event.post(pygame.event.Event(pygame.USEREVENT, code="mode", mode=mode, args=kwargs))
+
+    def join(self):
+        return
+
+    def getLuaScreen(self, lua):
+        return Lua_Screen(lua, self)
+        
+    def run(self):
+        # Init pygame
         pygame.init()
 
         self.background = (0, 0, 0)
 
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        # Init pygame screen
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
         pygame.display.set_caption('Mudblood')
 
+        # Init pygame mixer
+        pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
+
         self.fontsize = 15
-        self.fontname = "Mono"
+        self.fontname = "Monaco,Lucida Typewriter,Andale Mono"
         self.font = pygame.font.SysFont(self.fontname, self.fontsize)
         self.fontwidth, self.fontheight = self.font.size("a")
         self.antialias = False
 
-        # Create a source for user input
-        self.source = PygameSource()
-        self.source.start()
-        self.source.bind(self.master.drain)
-
-    def tick(self):
-        pass
-        
-    def run(self):
         while True:
-            ev = self.nextEvent()
+            ev = pygame.event.wait()
 
             if ev is None:
                 continue
 
-            if isinstance(ev, screen.UpdateScreenEvent):
-                self.doUpdate()
-            elif isinstance(ev, screen.SizeScreenEvent):
+            if ev.type == pygame.VIDEOEXPOSE:
+                pass
+            elif ev.type == pygame.VIDEORESIZE:
                 self.width, self.height = ev.w, ev.h
-            elif isinstance(ev, screen.DestroyScreenEvent):
+                self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+            elif ev.type == pygame.QUIT:
+                self.put(event.QuitEvent())
                 pygame.quit()
-                self.doneEvent()
                 break
-            elif isinstance(ev, screen.ModeScreenEvent):
-                self.modeManager.setMode(ev.mode, **ev.args)
-            elif isinstance(ev, screen.KeyScreenEvent):
-                self.modeManager.key(ev.key)
+            elif ev.type == pygame.USEREVENT:
+                if ev.code == "mode":
+                    self.modeManager.setMode(ev.mode, **ev.args)
+            elif ev.type == pygame.KEYDOWN:
+                if ev.key in keymap:
+                    k = keymap[ev.key]
+                    self.modeManager.key(k)
+                elif ev.unicode != "":
+                    k = ord(ev.unicode)
+                    self.modeManager.key(k)
 
-            self.doneEvent()
+            self.doUpdate()
 
     def doUpdate(self):
         self.screen.fill(self.background)
