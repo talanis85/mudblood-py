@@ -208,15 +208,6 @@ class PygameScreen(modalscreen.ModalScreen):
 
             cursor = self.font.render("_", self.antialias, colormap[colors.YELLOW])
             self.screen.blit(cursor, (x + self.normalMode.getCursor()*self.fontwidth, y))
-        elif self.modeManager.getMode() == "lua":
-            x = border
-            y += 2 * self.fontheight
-
-            curline = self.font.render("\\" + self.luaMode.getBuffer(), self.antialias, colormap[colors.RED], self.background)
-            self.screen.blit(curline, (x, y))
-
-            cursor = self.font.render("_", self.antialias, colormap[colors.RED])
-            self.screen.blit(cursor, (x + (self.luaMode.getCursor()+1)*self.fontwidth, y))
         elif self.modeManager.getMode() == "prompt":
             x = border
             y += 2 * self.fontheight
