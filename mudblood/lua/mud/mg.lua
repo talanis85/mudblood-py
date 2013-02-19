@@ -293,7 +293,7 @@ function M.gmcp.setup()
                 return
             end
 
-            print(string.format(colors.Blue .. string.sub(data['msg'], 1, -2) .. colors.Off))
+            print(colors.Blue .. string.sub(data['msg'], 1, -2) .. colors.Off)
         end
 
         M.onReport()
