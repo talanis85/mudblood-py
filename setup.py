@@ -18,7 +18,7 @@ configuration = {
         }
  
 if "py2exe" in sys.argv:
-    screens = ['wxscreen']
+    screens = ['wxscreen', 'pgscreen']
 
     import py2exe
 
@@ -58,7 +58,7 @@ if "py2exe" in sys.argv:
         **configuration
     )
 else:
-    screens = ['ttyscreen', 'tbscreen', 'wxscreen']
+    screens = ['ttyscreen', 'tbscreen', 'wxscreen', 'pgscreen']
 
     print("Using Distribute...")
 
