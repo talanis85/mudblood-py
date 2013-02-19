@@ -7,6 +7,8 @@ from mudblood import event
 from mudblood import screen
 from mudblood import keys
 from mudblood import modes
+from mudblood import lua
+from mudblood import colors
 from mudblood.screen import modalscreen
 
 keymap = {
@@ -35,6 +37,29 @@ keymap = {
         pygame.K_KP7:           keys.KEY_NUMPAD7,
         pygame.K_KP8:           keys.KEY_NUMPAD8,
         pygame.K_KP9:           keys.KEY_NUMPAD9,
+
+        pygame.K_UP:            keys.KEY_ARROW_UP,
+        pygame.K_DOWN:          keys.KEY_ARROW_DOWN,
+        pygame.K_RIGHT:         keys.KEY_ARROW_RIGHT,
+        pygame.K_LEFT:          keys.KEY_ARROW_LEFT,
+        pygame.K_INSERT:        keys.KEY_INSERT,
+        pygame.K_DELETE:        keys.KEY_DELETE,
+        pygame.K_HOME:          keys.KEY_HOME,
+        pygame.K_END:           keys.KEY_END,
+        pygame.K_PAGEUP:        keys.KEY_PGUP,
+        pygame.K_PAGEDOWN:      keys.KEY_PGDN,
+}
+
+colormap = {
+        colors.BLACK:           (0, 0, 0),
+        colors.RED:             (255, 100, 100),
+        colors.GREEN:           (0, 255, 0),
+        colors.YELLOW:          (255, 255, 0),
+        colors.BLUE:            (0, 0, 255),
+        colors.MAGENTA:         (255, 0, 255),
+        colors.CYAN:            (0, 255, 255),
+        colors.WHITE:           (255, 255, 255),
+        colors.DEFAULT:         (255, 255, 255),
 }
 
 def createScreen(master):
@@ -139,7 +164,7 @@ class PygameScreen(modalscreen.ModalScreen):
         for l in lines:
             x = border
             for c in l:
-                char = self.font.render(c[1], self.antialias, (c[0][0]*15,c[0][0]*15,c[0][0]*15), self.background)
+                char = self.font.render(c[1], self.antialias, colormap[c[0][0]], (c[0][1] == colors.DEFAULT and self.background or colormap[c[0][1]]))
                 self.screen.blit(char, (x, y))
                 x += self.fontwidth
             y += self.fontheight
@@ -148,19 +173,19 @@ class PygameScreen(modalscreen.ModalScreen):
 
         # Prompt line
         if self.modeManager.getMode() == "normal":
-            curline = self.font.render(self.normalMode.getBuffer(), self.antialias, (255,255,255), self.background)
+            curline = self.font.render(self.normalMode.getBuffer(), self.antialias, colormap[colors.YELLOW], self.background)
             self.screen.blit(curline, (x, y))
 
-            cursor = self.font.render("_", self.antialias, (255,255,255))
+            cursor = self.font.render("_", self.antialias, colormap[colors.YELLOW])
             self.screen.blit(cursor, (x + self.normalMode.getCursor()*self.fontwidth, y))
         elif self.modeManager.getMode() == "lua":
             x = border
             y += 2 * self.fontheight
 
-            curline = self.font.render("\\" + self.luaMode.getBuffer(), self.antialias, (255,100,100), self.background)
+            curline = self.font.render("\\" + self.luaMode.getBuffer(), self.antialias, colormap[colors.RED], self.background)
             self.screen.blit(curline, (x, y))
 
-            cursor = self.font.render("_", self.antialias, (255,255,255))
+            cursor = self.font.render("_", self.antialias, colormap[colors.RED])
             self.screen.blit(cursor, (x + (self.luaMode.getCursor()+1)*self.fontwidth, y))
 
         pygame.display.flip()
