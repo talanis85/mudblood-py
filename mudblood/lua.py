@@ -32,7 +32,6 @@ class Lua(object):
         self.tryExecute("events = require 'events'")
         self.tryExecute("triggers = require 'triggers'")
         self.tryExecute("mapper = require 'mapper'")
-        self.tryExecute("profile = require 'profile'")
         self.tryExecute("help = require 'help'")
 
         self.tryExecute("require 'common'")
