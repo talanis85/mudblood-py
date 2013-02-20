@@ -88,6 +88,13 @@ class AString(object):
         self.string = new
         return self
     
+    def bg(self, bg):
+        new = []
+        for c in self.string:
+            new.append(((c[0][0], bg, c[0][2]), c[1]))
+        self.string = new
+        return self
+
     def splitLines(self):
         cur = AString()
         for c in self.string:
