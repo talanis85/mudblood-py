@@ -10,6 +10,7 @@ from mudblood import keys
 from mudblood import modes
 from mudblood import lua
 from mudblood import colors
+from mudblood import package
 from mudblood.screen import modalscreen
 
 keymap = {
@@ -162,8 +163,7 @@ class PygameScreen(modalscreen.ModalScreen):
         pygame.display.set_caption('Mudblood')
 
         self.fontsize = 15
-        self.fontname = "Monaco,Lucida Typewriter,Andale Mono"
-        self.font = pygame.font.SysFont(self.fontname, self.fontsize)
+        self.font = pygame.font.Font(package.getResourceFilename("fonts", "DejaVuSansMono.ttf"), self.fontsize)
         self.fontwidth, self.fontheight = self.font.size("a")
         self.antialias = False
 

@@ -1,1 +1,2 @@
 recursive-include mudblood/lua *.lua
+recursive-include mudblood/fonts *.ttf
