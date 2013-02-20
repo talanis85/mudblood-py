@@ -40,6 +40,7 @@ class Lua(object):
         g.ctxRoom = Lua_Context(self)
         g.ctxPrompt = Lua_Context(self)
 
+        g.loadProfile = self.loadProfile
         g.reload = self.reload
         g.quit = self.session.quit
         g.mode = self.mode
@@ -68,6 +69,11 @@ class Lua(object):
             self.lua.globals().map.close()
         except:
             pass
+
+    def loadProfile(self, profile):
+        self.lua.globals().map.close()
+        self.luaInit()
+        self.loadFile(os.path.join(profile, "profile.lua"))
 
     def loadFile(self, filename):
         self.profilePath = os.path.abspath(os.path.dirname(filename))
