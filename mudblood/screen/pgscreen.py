@@ -159,17 +159,15 @@ class PygameScreen(modalscreen.ModalScreen):
         self.haveSound = True
 
         # Init pygame
+        try:
+            pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=4096)
+        except:
+            haveSound = False
         pygame.init()
 
         # Init pygame screen
         self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
         pygame.display.set_caption('Mudblood')
-
-        # Init pygame mixer
-        try:
-            pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
-        except:
-            haveSound = False
 
         self.fontsize = 15
         self.fontname = "Monaco,Lucida Typewriter,Andale Mono"
