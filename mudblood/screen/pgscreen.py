@@ -99,7 +99,8 @@ class Lua_Screen(lua.LuaExposedObject):
         self._screen.moveScroll(name, value)
 
     def playMusic(self, filename):
-        pygame.mixer.Sound(filename).play(-1)
+        if self._screen.haveSound:
+            pygame.mixer.Sound(filename).play(-1)
 
 class PygameScreen(modalscreen.ModalScreen):
     def __init__(self, master):
@@ -155,6 +156,8 @@ class PygameScreen(modalscreen.ModalScreen):
         return Lua_Screen(lua, self)
         
     def run(self):
+        self.haveSound = True
+
         # Init pygame
         pygame.init()
 
@@ -163,7 +166,10 @@ class PygameScreen(modalscreen.ModalScreen):
         pygame.display.set_caption('Mudblood')
 
         # Init pygame mixer
-        pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
+        try:
+            pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
+        except:
+            haveSound = False
 
         self.fontsize = 15
         self.fontname = "Monaco,Lucida Typewriter,Andale Mono"
