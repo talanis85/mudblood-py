@@ -26,7 +26,7 @@ if "py2exe" in sys.argv:
     sys.path.append("C:\\Program Files\\Microsoft Visual Studio 9.0\\VC\\redist\\x86\\Microsoft.VC90.CRT")
 
     includes = []
-    excludes = []
+    excludes = ['Tkinter']
     packages = ['mudblood', 'mudblood.screen']
 
     print("Using py2exe...")
