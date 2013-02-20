@@ -98,10 +98,6 @@ class Lua_Screen(lua.LuaExposedObject):
     def scroll(self, value, name='main'):
         self._screen.moveScroll(name, value)
 
-    def playMusic(self, filename):
-        if self._screen.haveSound:
-            pygame.mixer.Sound(filename).play(-1)
-
 class PygameScreen(modalscreen.ModalScreen):
     def __init__(self, master):
         super(PygameScreen, self).__init__(master)
@@ -159,10 +155,6 @@ class PygameScreen(modalscreen.ModalScreen):
         self.haveSound = True
 
         # Init pygame
-        try:
-            pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=4096)
-        except:
-            haveSound = False
         pygame.init()
 
         # Init pygame screen
