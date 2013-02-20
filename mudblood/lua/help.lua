@@ -3,7 +3,6 @@
 -- @alias M
 local M = {}
 
-require "lfs"
 require "io"
 require "table"
 
