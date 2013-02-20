@@ -47,7 +47,7 @@ class Session(event.Source):
         if self.script:
             self.log("Loading {}".format(self.script), "info")
             try:
-                self.lua.loadFile(os.path.join(self.script, "profile.lua"))
+                self.lua.loadProfile(self.script)
             except Exception as e:
                 self.log("Lua error: {}\n{}".format(str(e), traceback.format_exc()), "err")
 
@@ -107,6 +107,9 @@ class Session(event.Source):
             self.lastLine = ""
 
             self.processInput(ev.text)
+
+        elif isinstance(ev, event.LuaEvent):
+            self.luaEval(ev.code)
 
         elif isinstance(ev, telnet.TelnetEvent):
             self.put(event.LogEvent("Received Telneg {}".format(ev)))

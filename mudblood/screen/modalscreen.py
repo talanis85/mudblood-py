@@ -60,7 +60,7 @@ class LuaMode(modes.BufferMode):
             self.addHistory()
 
             self.screen.put(event.ModeEvent("normal"))
-            self.screen.master.session.luaEval(self.getBuffer() + "\n")
+            self.screen.put(event.LuaEvent(self.getBuffer() + "\n"))
             self.clearBuffer()
         else:
             super(LuaMode, self).onKey(key)

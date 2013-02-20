@@ -191,6 +191,11 @@ class InputEvent(Event):
         self.text = text
         self.display = display
 
+class LuaEvent(Event):
+    def __init__(self, code):
+        super(LuaEvent, self).__init__()
+        self.code = code
+
 class CallableEvent(Event):
     """
     A callable should be called with the given arguments.
