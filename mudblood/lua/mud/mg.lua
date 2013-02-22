@@ -268,31 +268,31 @@ function M.gmcp.setup()
     screen.windowVisible("telnet", true)
     screen.windowSize("telnet", 40)
 
-    events.register("gmcp", function (module, data)
-        if module == "MG.char.base" then
+    events.register("gmcp", function (mod, data)
+        if mod == "MG.char.base" then
             M.stats.name = data['name']
             M.stats.guild = data['guild']
             M.stats.race = data['race']
             M.stats.presay = data['presay']
             M.stats.title = data['title']
             M.stats.wizlevel = data['wizlevel']
-        elseif module == "MG.char.info" then
+        elseif mod == "MG.char.info" then
             M.stats.level = data['level']
             M.stats.guildlevel = data['guild_level']
             M.stats.guildtitle = data['guild_title']
-        elseif module == "MG.char.maxvitals" then
+        elseif mod == "MG.char.maxvitals" then
             M.stats.lp_max = data['max_hp']
             M.stats.kp_max = data['max_sp']
             M.stats.gift_max = data['max_poison']
-        elseif module == "MG.char.attributes" then
+        elseif mod == "MG.char.attributes" then
             M.stats.a_con = data['con']
             M.stats.a_int = data['int']
             M.stats.a_dex = data['dex']
             M.stats.a_str = data['str']
-        elseif module == "MG.char.vitals" then
+        elseif mod == "MG.char.vitals" then
             M.stats.lp = data['hp']
             M.stats.kp = data['sp']
-        elseif module == "comm.channel" then
+        elseif mod == "comm.channel" then
 
             -- Workaround. To be removed.
             if type(data) == "number" then
