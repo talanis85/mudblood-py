@@ -62,6 +62,7 @@ class Lua(object):
         g.editor = self.editor
         g.path = Lua_Path(self)
         g.profile = self.profile
+        g.listProfiles = self.listProfiles
 
         g.telnet = Lua_Telnet(self)
         g.map = Lua_Map(self)
@@ -213,6 +214,15 @@ class Lua(object):
             return None
 
         return Lua_Profile(self, name)
+
+    def listProfiles(self):
+        ret = []
+        for r, ds, _ in os.walk("."):
+            for d in ds:
+                if os.path.exists(os.path.join(r, d, "profile.lua")):
+                    ret.append(os.path.normpath(os.path.join(r, d)))
+
+        return self.lua.table(*ret)
 
 class LuaExposedObject(object):
     def __init__(self, lua):
