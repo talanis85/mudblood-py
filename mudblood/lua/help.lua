@@ -1,8 +1,3 @@
---- Help system.
--- @module help
--- @alias M
-local M = {}
-
 require "io"
 require "table"
 
@@ -20,31 +15,13 @@ local function more()
     ask("ENTER to continue")
 end
 
-M.tutorial = triggers.coroutine(function ()
-    local name, template
+function help(topic)
+    fd = io.open(path.library() .. "/help/" .. topic)
+    if fd == nil then
+        print("-- There is no help for '" .. topic .. "'")
+        return
+    end
 
-    print([[
-Willkommen bei mudblood!
+    print(fd:read("*all"))
+end
 
-Mudblood ist ein funktionsreicher und sehr flexibler Client fuer textbasierte MUDs aller Art.
-Dieses Tutorial versucht Dir den Einstieg in dieses Programm leichter machen.
-]])
-
-    more()
-
-    print([[
-1. BEDIENKONZEPT
-
-Es gibt eine Vielzahl verschiedener MUDs im Internet. Und es gibt noch viel mehr individuelle
-Spieler. Um diesem Umstand Rechnung zu tragen, ist das Ziel von mudblood, so frei konfigurierbar
-wie moeglich zu sein.
-
-Desweiteren verzichtet mudblood vollstaendig auf Mausunterstuetzung. Jegliche Bedienung erfolgt
-ueber die Tastatur. Im Folgenden werden wir sehen, wie das geht.
-]])
-
-    more()
-
-end)
-
-return M

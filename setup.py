@@ -59,6 +59,7 @@ if "py2exe" in sys.argv:
         install_requires = deps(screens),
         packages = packages,
         data_files = [('lua', glob.glob('mudblood/lua/*.lua')), ('lua/mud', glob.glob('mudblood/lua/mud/*.lua')),
+                      ('lua/help', glob.glob('mudblood/lua/help/*')),
                       ('fonts', glob.glob('mudblood/fonts/*.ttf'))],
         options = {'py2exe': {'bundle_files': 1, 'includes': includes, 'excludes': excludes}},
         console = [{'script': "mudblood/main.py", 'dest_base': "mudblood-console"}],
