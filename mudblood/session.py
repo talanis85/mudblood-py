@@ -50,6 +50,8 @@ class Session(event.Source):
                 self.lua.lua.globals().profile(self.profile).load()
             except Exception as e:
                 self.log("Lua error: {}\n{}".format(str(e), traceback.format_exc()), "err")
+        else:
+            self.lua.loadFile(package.getResourceFilename("lua", "default.lua"))
 
         self.log("Session started.", "info")
 
