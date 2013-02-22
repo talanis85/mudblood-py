@@ -17,6 +17,14 @@ configuration = {
         'author_email': "philip.kranz@gmail.com",
         }
  
+def deps(screens):
+    ret = ['lupa >= 0.20']
+    if 'pgscreen' in screens:
+        ret.append('pygame >= 1.9.1')
+    if 'tbscreen' in screens:
+        ret.append('termbox >= 1.0')
+    return ret
+
 if "py2exe" in sys.argv:
     screens = ['wxscreen', 'pgscreen']
 
@@ -48,7 +56,7 @@ if "py2exe" in sys.argv:
         includes.append('mudblood.screen.' + s)
 
     setup(
-        install_requires = ['lupa >= 0.20'],
+        install_requires = deps(screens),
         packages = packages,
         data_files = [('lua', glob.glob('mudblood/lua/*.lua')), ('lua/mud', glob.glob('mudblood/lua/mud/*.lua')),
                       ('fonts', glob.glob('mudblood/fonts/*.ttf'))],
@@ -64,7 +72,7 @@ else:
     print("Using Distribute...")
 
     setup(
-        install_requires = ['lupa >= 0.20'],
+        install_requires = deps(screens),
         packages = ['mudblood', 'mudblood.screen'],
         include_package_data = True,
         entry_points = {'console_scripts': ['mudblood = mudblood.main:main']},
