@@ -17,7 +17,7 @@ class Session(event.Source):
     A session is one single connection to a server. Every session has its own socket,
     linebuffer, map and lua-runtime.
     """
-    def __init__(self, master, script=None):
+    def __init__(self, master, profile=None):
         super(Session, self).__init__()
         
         self.master = master
@@ -36,7 +36,7 @@ class Session(event.Source):
         self.encoding = "utf8"
         self.map = map.Map()
         self.rpc = None
-        self.script = script
+        self.profile = profile
 
         self.local_echo = True
 
@@ -44,10 +44,10 @@ class Session(event.Source):
         self.height = 0
 
     def start(self):
-        if self.script:
-            self.log("Loading {}".format(self.script), "info")
+        if self.profile:
+            self.log("Loading {}".format(self.profile), "info")
             try:
-                self.lua.loadProfile(self.script)
+                self.lua.lua.globals().profile(self.profile).load()
             except Exception as e:
                 self.log("Lua error: {}\n{}".format(str(e), traceback.format_exc()), "err")
 

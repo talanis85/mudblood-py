@@ -16,12 +16,19 @@ class Lua(object):
     def __init__(self, session, packagePath):
         self.packagePath = packagePath
         self.session = session
+
+        self.currentProfile = None
         self.profilePath = "."
-        self.filename = None
+        self.loadPath = self.profilePath
+
+        self.lua = None
 
         self.luaInit()
 
     def luaInit(self):
+        if self.lua is not None:
+            self.lua.globals().map.close()
+
         self.lua = lupa.LuaRuntime()
 
         g = self.lua.globals()
@@ -40,8 +47,6 @@ class Lua(object):
         g.ctxRoom = Lua_Context(self)
         g.ctxPrompt = Lua_Context(self)
 
-        g.loadProfile = self.loadProfile
-        g.reload = self.reload
         g.quit = self.session.quit
         g.mode = self.mode
         g.connect = self.connect
@@ -56,6 +61,7 @@ class Lua(object):
         g.config = self.config
         g.editor = self.editor
         g.path = Lua_Path(self)
+        g.profile = self.profile
 
         g.telnet = Lua_Telnet(self)
         g.map = Lua_Map(self)
@@ -70,16 +76,7 @@ class Lua(object):
         except:
             pass
 
-    def loadProfile(self, profile):
-        self.lua.globals().map.close()
-        self.luaInit()
-        self.loadFile(os.path.join(profile, "profile.lua"))
-
     def loadFile(self, filename):
-        self.profilePath = os.path.abspath(os.path.dirname(filename))
-        self.loadPath = self.profilePath
-        self.filename = filename
-
         self.lua.globals().dofile(filename)
     
     def toString(self, ob):
@@ -141,14 +138,6 @@ class Lua(object):
 
     # Lua functions
 
-    def reload(self):
-        if self.filename is None:
-            self.error("No file loaded")
-        else:
-            self.lua.globals().map.close()
-            self.luaInit()
-            self.loadFile(self.filename)
-    
     def connect(self, host, port):
         self.session.connect(host, port)
 
@@ -216,6 +205,15 @@ class Lua(object):
         self.session.markPrompt()
         self.lua.globals().ctxPrompt.reset()
 
+    def profile(self, name=None):
+        if name is None:
+            name = self.currentProfile
+
+        if not os.path.exists(os.path.join(name, "profile.lua")):
+            return None
+
+        return Lua_Profile(self, name)
+
 class LuaExposedObject(object):
     def __init__(self, lua):
         self._lua = lua
@@ -225,6 +223,18 @@ class LuaExposedObject(object):
 
     def __repr__(self):
         return self.__str__()
+
+class Lua_Profile(LuaExposedObject):
+    def __init__(self, lua, path):
+        super(Lua_Profile, self).__init__(lua)
+        self._path = path
+
+    def load(self):
+        self._lua.luaInit()
+        self._lua.currentProfile = self._path
+        self._lua.profilePath = os.path.abspath(os.path.dirname(self._path))
+        self._lua.loadPath = self._lua.profilePath
+        self._lua.loadFile(os.path.join(self._path, "profile.lua"))
 
 class Lua_Path(LuaExposedObject):
     def profile(self):
