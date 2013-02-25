@@ -417,7 +417,7 @@ class MapJSONDecoderOld(json.JSONDecoder):
             room = Room(d['id'])
             for direction,edge in d['edges'].items():
                 room.edges[('base', direction)] = edge
-                room.edges[('base', direction)].layer = layer
+                room.edges[('base', direction)].layer = 'base'
             for virt in d['virtualEdges']:
                 room.virtualEdges.append(virt)
             room.userdata = d['userdata']
