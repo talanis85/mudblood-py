@@ -242,7 +242,7 @@ class Lua_Profile(LuaExposedObject):
     def load(self):
         self._lua.luaInit()
         self._lua.currentProfile = self._path
-        self._lua.profilePath = os.path.abspath(os.path.dirname(self._path))
+        self._lua.profilePath = os.path.abspath(self._path)
         self._lua.loadPath = self._lua.profilePath
         self._lua.loadFile(os.path.join(self._path, "profile.lua"))
 
