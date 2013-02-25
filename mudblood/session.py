@@ -186,7 +186,8 @@ class Session(event.Source):
         self.lastBlock = ""
 
     def getStatusLine(self):
-        return (self.lua.eval("mapper.walking()") and "WALKING" or "NOT WALKING")
+        #return (self.lua.eval("mapper.walking()") and "WALKING" or "NOT WALKING")
+        return ""
     
     def echo(self, string, lb='main'):
         if lb not in self.linebuffers:
