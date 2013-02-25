@@ -11,12 +11,12 @@ if false then
 
     --- Get a room by tag or id.
     -- @param id A room id or room tag.
-    -- @treturn map.Room The room object or nil if the room was not found.
+    -- @treturn Room The room object or nil if the room was not found.
     function room(id) end
 
     --- Create a new room.
     -- The new room can then be connected to another room.
-    -- @treturn map.Room The newly created room.
+    -- @treturn Room The newly created room.
     function addRoom() end
 end
 
