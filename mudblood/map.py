@@ -134,6 +134,7 @@ class Room(object):
 
         dest.refcount += 1
         self.edges[(layer, name)] = Edge(dest)
+        self.edges[(layer, name)].layer = layer
 
     def disconnect(self, layer, name):
         """
@@ -382,6 +383,7 @@ class MapJSONDecoder(json.JSONDecoder):
             for layer,edges in d['edges'].items():
                 for direction,edge in edges.items():
                     room.edges[(layer, direction)] = edge
+                    room.edges[(layer, direction)].layer = layer
             for virt in d['virtualEdges']:
                 room.virtualEdges.append(virt)
             room.userdata = d['userdata']
@@ -415,6 +417,7 @@ class MapJSONDecoderOld(json.JSONDecoder):
             room = Room(d['id'])
             for direction,edge in d['edges'].items():
                 room.edges[('base', direction)] = edge
+                room.edges[('base', direction)].layer = layer
             for virt in d['virtualEdges']:
                 room.virtualEdges.append(virt)
             room.userdata = d['userdata']
