@@ -300,6 +300,22 @@ function M.gmcp.setup()
             end
 
             print(colors.Blue .. string.sub(data['msg'], 1, -2) .. colors.Off)
+        elseif mod == "MG.room.info" then
+            local oldhash = map.room().getUserdata("hash")
+            if M.mapper.mode == "updatehash" then
+                if oldhash ~= nil and data['id'] ~= oldhash then
+                    info(string.format("Hash-Konflikt! Alter Hash: %s, neuer Hash: %s.", oldhash, data['id']))
+                    M.mapper.mode = "fixed"
+                elseif oldhash == nil then
+                    map.room().setUserdata("hash", data['id'])
+                    info(string.format("Hash gesetzt: %s", data['id']))
+                end
+                mapper.V()
+            elseif oldhash ~= nil and data['id'] ~= oldhash then
+                info(string.format("Hash-Konflikt! Fliege zu %s.", data['id']))
+                map.room(data['id'], "hash").fly()
+                M.mapper.mode = "fixed"
+            end
         end
 
         M.onReport()
@@ -307,7 +323,7 @@ function M.gmcp.setup()
 
     telnet.negDo(201)
     telnet.gmcpObject("Core.Hello", {client="mudblood", version="0.1"})
-    telnet.gmcpArray("Core.Supports.Set", {"MG.char 1", "comm.channel 1"})
+    telnet.gmcpArray("Core.Supports.Set", {"MG.char 1", "comm.channel 1", "MG.room 1"})
     telnet.gmcpValue("Core.Debug", 1)
 end
 
@@ -498,6 +514,7 @@ function M.mapper.setup()
     nmap(M.keyprefix .. "<TAB>mn", function () M.mapper.mode = "node"; info("mapper: Modus node") end)
     nmap(M.keyprefix .. "<TAB>mo", function () M.mapper.mode = "off"; info("mapper: Modus off") end)
     nmap(M.keyprefix .. "<TAB>mm", function () M.mapper.mode = "move"; info("mapper: Modus move") end)
+    nmap(M.keyprefix .. "<TAB>mu", function () M.mapper.mode = "updatehash"; info("mapper: Modus updatehash") end)
 
     if M.mm then
         nmap(M.keyprefix .. "<TAB><TAB>", M.mapper.printRoomInfo)
@@ -518,6 +535,10 @@ M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
             found = true
             break
         end
+    end
+
+    if found and M.mapper.mode == "updatehash" then
+        mapper.P()
     end
 
     if found == false and M.mapper.mode == "auto" and M.mapper.opposites[l] ~= nil then
