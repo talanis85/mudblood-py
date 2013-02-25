@@ -183,7 +183,7 @@ class TermboxScreen(modalscreen.ModalScreen):
             if start > 0:
                 self.tb.change_cell(x, y, ord('$'), termbox.DEFAULT, termbox.YELLOW)
                 x += 1
-                start -= 1
+                start += 1
 
             end = start + self.width - x - 1
 
@@ -258,6 +258,7 @@ class TermboxScreen(modalscreen.ModalScreen):
             #wh = int(windowArea * (self.window_sizes[w] / ratioWhole))
             wh = self.window_sizes[w]
             if w == 'map':
+                # TODO: Race condition! Map must be rendered in session thread!
                 m = map.AsciiMapRenderer(self.master.session.map).render(self.width, wh)
                 for i in range(self.width * wh):
                     self.tb.change_cell(x, y, m[i], colors.DEFAULT, colors.DEFAULT)
