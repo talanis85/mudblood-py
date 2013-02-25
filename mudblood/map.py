@@ -485,7 +485,7 @@ class AsciiMapRenderer(MapRenderer):
         if x >= 0 and x < w and y >= 0 and y < h:
             if r.id == self.map.currentRoom:
                 self.out[y*w+x] = ord('X')
-            else:
+            elif self.out[y*w+x] != ord('X'):
                 self.out[y*w+x] = ord('#')
 
         for d,e in r.getOverlay(self.map.renderOverlay).items():
