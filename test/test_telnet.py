@@ -38,9 +38,9 @@ class TestTelnegs(unittest.TestCase):
         self.telnet.bind(self.drain)
 
     def test_1arg(self):
-        self.file.write(bytearray([IAC, CMD_EOR]))
+        self.file.write(bytearray([IAC, EOR]))
         self.telnet.poll()
-        self.assertDrainContents([TelnetEvent(CMD_EOR, None, None)])
+        self.assertDrainContents([TelnetEvent(EOR, None, None)])
 
     def test_2arg(self):
         self.file.write(bytearray([IAC, DO, OPT_EOR]))
