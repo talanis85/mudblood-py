@@ -1,10 +1,27 @@
 import json
-import re
 
+#
 # EXCEPTIONS
+#
 
-class InvalidMapFile(Exception):
+class InvalidMapFileException(Exception):
     pass
+
+class UnsettledMapException(Exception):
+    def __init__(self):
+        super(UnsettledMapException, self).__init__("Unsettled map")
+
+class DuplicateEdgeException(Exception):
+    def __init__(self):
+        super(DuplicateEdgeException, self).__init__("Duplicate edge")
+
+class InvalidEdgeException(Exception):
+    def __init__(self):
+        super(InvalidEdgeException, self).__init__("Invalid edge")
+
+#
+# DIRECTIONS
+#
 
 NORTH = 'n'
 NORTHEAST = 'ne'
@@ -32,94 +49,149 @@ def getDirectionDelta(d):
     return (directions[d][1], directions[d][2])
 
 class Room(object):
+    """
+    A room.
+    """
     def __init__(self, id):
         self.id = id
-        self.tag = None
         self.edges = {}
         self.virtualEdges = []
         self.x = 0
         self.y = 0
         self.userdata = {}
+        self.refcount = 0
 
-    @classmethod
-    def fromJsonObj(cls, ob):
-        r = cls(ob['id'])
-        r.tag = ob.get('tag', None)
-        r.edges = {}
-        r.virtualEdges = []
-        r.userdata = ob['userdata']
-        for e in ob.get('edges', []):
-            r.edges[e] = Edge.fromJsonObj(ob['edges'][e])
-        for e in ob.get('virtualEdges', []):
-            r.virtualEdges.append(e)
-        return r
+    # Getters and setters
 
-    def toJsonObj(self):
-        ob = {}
-        ob['id'] = self.id
-        ob['tag'] = self.tag
-        ob['userdata'] = self.userdata
-
-        ob['edges'] = {}
-        ob['virtualEdges'] = []
-        for e in self.edges:
-            ob['edges'][e] = self.edges[e].toJsonObj()
-        for e in self.virtualEdges:
-            ob['virtualEdges'].append(e.id)
-
-        return ob
-    
     def getEdges(self):
-        ret = dict(self.edges)
-        for v in self.virtualEdges:
-            for d,e in v.edges.items():
-                ret[d] = e
+        return self.edges
+
+    def getVirtualEdges(self):
+        return self.virtualEdges
+
+    def getUserdata(self, key):
+        return (key in self.userdata and self.userdata[key] or None)
+
+    def setUserdata(self, key, value):
+        self.userdata[key] = value
+
+    # Layered view
+
+    def getOverlay(self, layers):
+        """
+        Returns a view on the edges of this room, filtered by the given
+        layer stack.
+        """
+        ret = {}
+
+        for l in layers:
+            for d,e in self.edges.items():
+                if d[0] == l:
+                    ret[d[1]] = e
+
+            for v in self.virtualEdges:
+                for d,e in v.edges.items():
+                    if d[0] == l:
+                        ret[d[1]] = e
+
         return ret
 
-    def dfs(self, map, x, y, callback, visited):
-        visited.add(self.id)
-        self.x = x
-        self.y = y
-        callback(self)
+    def getLayers(self):
+        """
+        Return a two-dimensional mapping of layers and their associated
+        edges, skipping virtual edges.
+        """
+        ret = {}
+
         for d,e in self.edges.items():
-            if e.dest.id not in visited and d in map.dirConfig and not e.split:
-                e.dest.dfs(map, x + directions[map.dirConfig[d]][1], y + directions[map.dirConfig[d]][2], callback, visited)
+            if d[0] not in ret:
+                ret[d[0]] = {}
+
+            ret[d[0]][d[1]] = e
+
+        return ret
+
+    # Edge management
+
+    def connect(self, layer, name, dest):
+        """
+        Create a new edge.
+        """
+        if (layer, name) in self.edges:
+            raise DuplicateEdgeException()
+
+        dest.refcount += 1
+        self.edges[(layer, name)] = Edge(dest)
+
+    def disconnect(self, layer, name):
+        """
+        Remove an edge.
+        """
+        if (layer, name) not in self.edges:
+            raise InvalidEdgeException()
+
+        self.edges[(layer, name)].dest.refcount -= 1
+        del self.edges[(layer, name)]
+
+    def connectVirtual(self, dest):
+        """
+        Create a new virtual edge.
+        """
+        if dest in self.virtualEdges:
+            raise DuplicateEdgeException()
+
+        dest.refcount += 1
+        self.virtualEdges.append(dest)
+
+    def disconnectVirtual(self, dest):
+        """
+        Remove a virtual edge.
+        """
+        if dest not in self.virtualEdges:
+            raise InvalidEdgeException()
+
+        dest.refcount -= 1
+        self.virtualEdges.remove(dest)
+
+    # General purpose DFS
 
 class Edge(object):
+    """
+    An edge.
+    """
     def __init__(self, dest):
         self.dest = dest
         self.weight = 1
         self.split = False
         self.userdata = {}
 
-    @classmethod
-    def fromJsonObj(cls, ob):
-        e = cls(ob['dest'])
-        e.weight = ob['weight']
-        e.split = ob['split']
-        e.userdata = ob['userdata']
-
-        return e
-    
-    def toJsonObj(self):
-        ob = {}
-        ob['dest'] = self.dest.id
-        ob['split'] = self.split
-        ob['weight'] = self.weight
-        ob['userdata'] = self.userdata
-
-        return ob
-
     def follow(self):
         if isinstance(self.dest, int):
-            raise Exception("Unfixated Edge cannot be followed")
+            raise UnsettledMapException()
 
         return self.dest
 
 class Map(object):
+    """
+    A map.
+    """
+
+    @classmethod
+    def load(self, f):
+        m = json.load(f, cls=MapJSONDecoder)
+        m.settle()
+
+        return m
+
+    @classmethod
+    def load_old(self, f):
+        m = json.load(f, cls=MapJSONDecoderOld)
+        m.settle()
+
+        return m
+
     def __init__(self):
         self.rooms = {0: Room(0)}
-        self.tags = {}
         self.dirConfig = {
                 'n': NORTH,
                 'ne': NORTHEAST,
@@ -132,134 +204,69 @@ class Map(object):
                 }
 
         self.currentRoom = 0
-
         self.weightCache = {}
-
         self._nextRid = 1
+        self._settled = True
 
-    def load(self, f):
-        j = json.load(f)
+    def save(self, f):
+        json.dump(self, f, cls=MapJSONEncoder)
 
-        self.rooms = {}
-        self.tags = {}
-        self._nextRid = 0
-        self.currentRoom = 0
+    def settle(self):
+        if self._settled:
+            return
 
-        # 1st pass
-        for r in j['rooms']:
-            newRoom = Room.fromJsonObj(r)
-            self.rooms[newRoom.id] = newRoom
-            if newRoom.tag:
-                self.tags[newRoom.tag] = newRoom
-            if self._nextRid <= newRoom.id:
-                self._nextRid = newRoom.id + 1
-
-        # 2nd pass
         for r in self.rooms:
             for e in self.rooms[r].edges:
                 self.rooms[r].edges[e].dest = self.rooms[self.rooms[r].edges[e].dest]
+                self.rooms[r].edges[e].dest.refcount += 1
             for e in range(len(self.rooms[r].virtualEdges)):
                 self.rooms[r].virtualEdges[e] = self.rooms[self.rooms[r].virtualEdges[e]]
+                self.rooms[r].virtualEdges[e].refcount += 1
 
-    def load_old(self, f):
-        self.rooms = {}
-        self.tags = {}
-        self._nextRid = 0
-        self.currentRoom = 0
+        self._settled = True
 
-        state = 0
-        line = 0
-        r = None
-        for l in f:
-            line += 1
-            l = l.rstrip()
-            if state == 0:
-                if l == "mudblood v1.0":
-                    state = 1
-                else:
-                    raise InvalidMapFile("Expected 'mudblood v1.0' in line {}".format(line))
-            elif state == 1:
-                nrooms = int(l)
-                for i in range(nrooms):
-                    self.rooms[i] = Room(i)
-                    self._nextRid = i+1
-                state = 2
-            elif state == 2:
-                if l == "":
-                    state = 3
-                else:
-                    m = re.match(r"^(\d+) (.+)$", l)
-                    if m is None:
-                        raise InvalidMapFile("Expected Room tag in line {}".format(line))
-                    self.rooms[int(m.group(1))].tag = m.group(2)
-            elif state == 3:
-                if l == "":
-                    state = 4
-                else:
-                    m = re.match(r"^(\d+)\|([^\|]*)\|(\d+)\|([^\|]*)\|(\d)(\d)(\d)$", l)
-                    if m is None:
-                        raise InvalidMapFile("Expected edge in line {}".format(line))
-                    if m.group(2) != "":
-                        e = Edge(self.rooms[int(m.group(3))])
-                        e.split = (m.group(5) == "1")
-                        e.weight = (m.group(6) == "1" and -1 or 1)
-                        e.userdata['level'] = int(m.group(7))
-                        self.rooms[int(m.group(1))].edges[m.group(2)] = e
-                    if m.group(4) != "":
-                        e = Edge(self.rooms[int(m.group(1))])
-                        e.split = (m.group(5) == "1")
-                        e.weight = (m.group(6) == "1" and -1 or 1)
-                        e.userdata['level'] = int(m.group(7))
-                        self.rooms[int(m.group(3))].edges[m.group(4)] = e
-            elif state == 4:
-                if l == "":
-                    state = 5
-                else:
-                    m = re.match(r"^(\d+) (\d+) (\d)$", l)
-                    if m is None:
-                        raise InvalidMapFile("Expected virtual edge in line {}".format(line))
-                    self.rooms[int(m.group(1))].virtualEdges.append(self.rooms[int(m.group(2))])
-            elif state == 5:
-                r = self.rooms[int(l)]
-                r.userdata['script'] = ""
-                state = 6
-            elif state == 6:
-                if l == "###":
-                    state = 5
-                else:
-                    r.userdata['script'] += l + "\n"
-
-
-    def save(self, f):
-        j = {"rooms": []}
-
-        for r in self.rooms:
-            j['rooms'].append(self.rooms[r].toJsonObj())
-
-        json.dump(j, f)
+    # Room management
 
     def addRoom(self):
+        """
+        Create a room with a fresh room ID.
+        """
         newroom = Room(self._nextRid)
         self.rooms[self._nextRid] = newroom
         self._nextRid += 1
+
         return newroom
 
-    def findRoom(self, id, userField=None):
-        if userField is not None:
-            for r in self.rooms.values():
-                if userField in r.userdata and r.userdata[userField] == id:
-                    id = r.id
-        elif isinstance(id, basestring):
-            for r in self.rooms.values():
-                if r.tag == id:
-                    id = r.id
+    def findRoom(self, id):
+        """
+        Get a specific room.
 
-        if isinstance(id, int):
-            return id
+        @param id       Either a numeric ID or a tuple (key, value) where key is
+                        a key in the userdata field.
+        """
+        if isinstance(id, tuple) and len(id) == 2:
+            for r in self.rooms.values():
+                if id[0] in r.userdata and r.userdata[id[0]] == id[1]:
+                    return r
+
+            return None
+        elif isinstance(id, int):
+            if id in self.rooms:
+                return self.rooms[id]
+            else:
+                return None
         else:
-            raise KeyError("Room {} not found".format(id))
+            raise TypeError("Argument must be int or 2-tuple")
 
-    def shortestPath(self, fr, to, weightFunction=None):
+    def goto(self, id):
+        """
+        Set current room to given room ID.
+        """
+        self.currentRoom = id
+    
+    # Shortest path
+
+    def shortestPath(self, fr, to, layers, weightFunction=None):
         import heapq
 
         visited = set()
@@ -272,8 +279,8 @@ class Map(object):
             if roomid == to:
                 return path
 
-            for d,e in self.rooms[roomid].getEdges().items():
-                if e.dest.id not in visited:
+            for d,e in self.rooms[roomid].getOverlay(layers).items():
+                if e.follow().id not in visited:
                     if weightFunction:
                         if (roomid, d) in self.weightCache:
                             weight = self.weightCache[(roomid, d)]
@@ -284,22 +291,130 @@ class Map(object):
                         weight = e.weight
 
                     if weight >= 0:
-                        heapq.heappush(queue, (length + e.weight, e.dest.id, path + (d,)))
+                        heapq.heappush(queue, (length + e.weight, e.follow().id, path + (d,)))
 
         return None
+
+    # General purpose DFS
+
+    def dfsVisual(self, room, callback, layers):
+        self._dfsVisual(room, 0, 0, callback, set(), layers)
+
+    def _dfsVisual(self, room, x, y, callback, visited, layers):
+        visited.add(room.id)
+        room.x = x
+        room.y = y
+        callback(room)
+        for d,e in room.getOverlay(layers).items():
+            if e.follow().id not in visited and d in self.dirConfig and not e.split:
+                self._dfsVisual(e.follow(),
+                                x + directions[self.dirConfig[d]][1], y + directions[self.dirConfig[d]][2],
+                                callback, visited, layers)
+
+    # Weight cache
 
     def invalidateWeightCache(self):
         self.weightCache = {}
 
-    def goto(self, id):
-        self.currentRoom = id
+class MapJSONEncoder(json.JSONEncoder):
+    def default(self, ob):
+        if isinstance(ob, Map):
+            return {'__type__': 'map',
+                    'rooms': ob.rooms.values()}
+        elif isinstance(ob, Room):
+            return {'__type__': 'room',
+                    'id': ob.id,
+                    'edges': ob.getLayers(),
+                    'virtualEdges': ob.getVirtualEdges(),
+                    'userdata': ob.userdata,
+                   }
+        elif isinstance(ob, Edge):
+            return {'__type__': 'edge',
+                    'dest': ob.dest.id,
+                    'weight': ob.weight,
+                    'split': ob.split,
+                    'userdata': ob.userdata,
+                   }
 
-    def dfs(self, room, callback):
-        room.dfs(self, 0, 0, callback, set())
+class MapJSONDecoder(json.JSONDecoder):
+    def __init__(self, **kwargs):
+        super(MapJSONDecoder, self).__init__(object_hook=self.dict_to_object, **kwargs)
+
+    def dict_to_object(self, d):
+        if '__type__' not in d:
+            return d
+
+        t = d['__type__']
+
+        if t == 'map':
+            m = Map()
+            m._settled = False
+            for room in d['rooms']:
+                m.rooms[room.id] = room
+                if room.id >= m._nextRid:
+                    m._nextRid = room.id + 1
+            return m
+
+        elif t == 'room':
+            room = Room(d['id'])
+            for layer,edges in d['edges'].items():
+                for direction,edge in edges.items():
+                    room.edges[(layer, direction)] = edge
+            for virt in d['virtualEdges']:
+                room.virtualEdges.append(virt)
+            room.userdata = d['userdata']
+            return room
+
+        elif t == 'edge':
+            edge = Edge(d['dest'])
+            edge.weight = d['weight']
+            edge.split = d['split']
+            edge.userdata = d['userdata']
+            return edge
+        
+        else:
+            return d
+
+class MapJSONDecoderOld(json.JSONDecoder):
+    def __init__(self, **kwargs):
+        super(MapJSONDecoderOld, self).__init__(object_hook=self.dict_to_object, **kwargs)
+
+    def dict_to_object(self, d):
+        if 'rooms' in d:
+            m = Map()
+            m._settled = False
+            for room in d['rooms']:
+                m.rooms[room.id] = room
+                if room.id >= m._nextRid:
+                    m._nextRid = room.id + 1
+            return m
+
+        elif 'edges' in d:
+            room = Room(d['id'])
+            for direction,edge in d['edges'].items():
+                room.edges[('base', direction)] = edge
+            for virt in d['virtualEdges']:
+                room.virtualEdges.append(virt)
+            room.userdata = d['userdata']
+            return room
+
+        elif 'dest' in d:
+            edge = Edge(d['dest'])
+            edge.weight = d['weight']
+            edge.split = d['split']
+            edge.userdata = d['userdata']
+            return edge
+
+        else:
+            return d
 
 class MapRenderer(object):
+    """
+    Base class for map renderers.
+    """
     def __init__(self, map):
         self.map = map
+        self.layers = ['main']
 
     def render(self):
         pass
@@ -320,11 +435,11 @@ class AsciiMapRenderer(MapRenderer):
         self.out = bytearray(" "*w*h, "ascii")
         self.visited = set()
 
-        self.renderRoom(self.map.rooms[self.map.currentRoom], int(w/2), int(h/2), w, h)
+        self._renderRoom(self.map.rooms[self.map.currentRoom], int(w/2), int(h/2), w, h)
 
         x = 1
         y = 1
-        for e in self.map.rooms[self.map.currentRoom].getEdges():
+        for e in self.map.rooms[self.map.currentRoom].getOverlay(self.layers):
             if y >= h:
                 break
             for c in str(e):
@@ -335,7 +450,7 @@ class AsciiMapRenderer(MapRenderer):
 
         return self.out
 
-    def renderRoom(self, r, x, y, w, h):
+    def _renderRoom(self, r, x, y, w, h):
         if r.id in self.visited:
             return
 
@@ -347,7 +462,7 @@ class AsciiMapRenderer(MapRenderer):
             else:
                 self.out[y*w+x] = ord('#')
 
-        for d,e in r.edges.items():
+        for d,e in r.getOverlay(self.layers).items():
             if d in self.map.dirConfig:
                 d2 = self.map.dirConfig[d]
                 newx = x
@@ -366,11 +481,5 @@ class AsciiMapRenderer(MapRenderer):
                     newx += directions[d2][1]
                     newy += directions[d2][2]
 
-                    self.renderRoom(e.dest, newx, newy, w, h)
+                    self._renderRoom(e.follow(), newx, newy, w, h)
 
-if __name__ == "__main__":
-    m = Map()
-    with open("testmap.json", "r") as f:
-        m.load(f)
-    with open("testmap.json.out", "w") as f:
-        m.save(f)
