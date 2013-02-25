@@ -589,6 +589,29 @@ function M.mapper.toPara(n)
     map.renderOverlay = M.mapper.overlay
 end
 
+function M.mapper.addPara1Room(room)
+    newroom = map.addRoom()
+
+    for direction, edge in pairs(room.overlay({'base', 'p1'})) do
+        print(direction)
+        print(#room.opposites({'base', 'p1'}, direction))
+        for _,v in ipairs(room.opposites({'base', 'p1'}, direction)) do
+            r = v[1]
+            e = v[2]
+
+            newroom.connect('base', r, edge.name)
+            if edge.layer == 'p1' then
+                r.disconnect('base', e.name)
+                r.connect('base', newroom, e.name)
+            else
+                r.connect('p1', newroom, e.name)
+            end
+        end
+    end
+
+    newroom.goto()
+end
+
 function M.mapper.fly(r)
     map.room(r).goto()
     info("Flug erfolgreich.")
