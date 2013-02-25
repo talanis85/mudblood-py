@@ -150,6 +150,9 @@ function M.base.setup()
         end
     end)
 
+    -- GMCP
+    M.gmcp.setup()
+
     -- Logging
     M.base.logfd = assert(io.open(path.profile() .. "/log", "a"))
 
@@ -265,9 +268,6 @@ end)
 M.gmcp = {}
 
 function M.gmcp.setup()
-    screen.windowVisible("telnet", true)
-    screen.windowSize("telnet", 40)
-
     events.register("gmcp", function (mod, data)
         if mod == "MG.char.base" then
             M.stats.name = data['name']
