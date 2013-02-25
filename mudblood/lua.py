@@ -529,6 +529,15 @@ class Lua_Map_Room(LuaExposedObject):
                     if edge2.follow() == self._room:
                         edge.follow().disconnect(layer2, direction2)
 
+    def opposites(self, overlay, name):
+        ret = []
+        l = self._room.getOverlay(list(overlay.values()))
+        if name in l:
+            for layer,direction,edge in l[name].follow().getFlatLayers():
+                if edge.follow() == self._room:
+                    ret.append(self._lua.lua.table(Lua_Map_Room(self._lua, l[name].follow()), Lua_Map_Edge(self._lua, l[name].follow(), direction, edge)))
+        return self._lua.lua.table(*ret)
+
     def findNeighbor(self, overlay, d):
         self.neighbor = None
 
