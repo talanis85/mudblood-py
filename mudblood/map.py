@@ -244,11 +244,16 @@ class Map(object):
         self._nextRid += 1
         return newroom
 
-    def findRoom(self, id):
-        if isinstance(id, basestring):
+    def findRoom(self, id, userField=None):
+        if userField is not None:
+            for r in self.rooms.values():
+                if userField in r.userdata and r.userdata[userField] == id:
+                    id = r.id
+        elif isinstance(id, basestring):
             for r in self.rooms.values():
                 if r.tag == id:
                     id = r.id
+
         if isinstance(id, int):
             return id
         else:

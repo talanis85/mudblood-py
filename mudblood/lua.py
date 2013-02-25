@@ -354,11 +354,11 @@ class Lua_Map(LuaExposedObject):
         self._filename = None
         self._flock = None
 
-    def room(self, id=None):
+    def room(self, id=None, index=None):
         if id is None:
             return Lua_Map_Room(self._lua, self._lua.session.map.currentRoom)
         else:
-            return Lua_Map_Room(self._lua, self._lua.session.map.findRoom(id))
+            return Lua_Map_Room(self._lua, self._lua.session.map.findRoom(id, index))
 
     def addRoom(self):
         return Lua_Map_Room(self._lua, self._lua.session.map.addRoom().id)
