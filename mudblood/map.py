@@ -111,6 +111,18 @@ class Room(object):
 
         return ret
 
+    def getFlatLayers(self):
+        """
+        Like getLayers, but return a 3-tuple (layer, direction, edge) for
+        every edge.
+        """
+        ret = []
+
+        for d,e in self.edges.items():
+            ret.append((d[0], d[1], e))
+
+        return ret
+
     # Edge management
 
     def connect(self, layer, name, dest):
@@ -262,7 +274,8 @@ class Map(object):
         """
         Set current room to given room ID.
         """
-        self.currentRoom = id
+        if id in self.rooms:
+            self.currentRoom = id
     
     # Shortest path
 
@@ -282,11 +295,11 @@ class Map(object):
             for d,e in self.rooms[roomid].getOverlay(layers).items():
                 if e.follow().id not in visited:
                     if weightFunction:
-                        if (roomid, d) in self.weightCache:
-                            weight = self.weightCache[(roomid, d)]
+                        if (roomid, d, e) in self.weightCache:
+                            weight = self.weightCache[(roomid, d, e)]
                         else:
-                            weight = weightFunction(roomid, d)
-                            self.weightCache[(roomid, d)] = weight
+                            weight = weightFunction(roomid, d, e)
+                            self.weightCache[(roomid, d, e)] = weight
                     else:
                         weight = e.weight
 
@@ -414,7 +427,7 @@ class MapRenderer(object):
     """
     def __init__(self, map):
         self.map = map
-        self.layers = ['main']
+        self.layers = ['base']
 
     def render(self):
         pass
