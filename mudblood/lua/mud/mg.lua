@@ -475,6 +475,9 @@ M.mapper.opposites = {
     u = "ob",
 }
 
+M.mapper.overlay = {'base'}
+M.mapper.layer = 'base'
+
 function M.mapper.setup()
     map.directions = {
         n = map.NORTH,
@@ -529,9 +532,9 @@ M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
     end
 
     local found = false
-    for k,v in pairs(map.room().edges) do
+    for k,v in pairs(map.room().overlay(M.mapper.overlay)) do
         if l == k then
-            v.to.fly()
+            v.follow().goto()
             found = true
             break
         end
@@ -542,15 +545,15 @@ M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
     end
 
     if found == false and M.mapper.mode == "auto" and M.mapper.opposites[l] ~= nil then
-        local n = map.room().findNeighbor(l)
+        local n = map.room().findNeighbor(M.mapper.overlay, l)
         if n then
-            map.room().connect(n, l, M.mapper.opposites[l])
-            n.fly()
+            map.room().connect(M.mapper.layer, n, l, M.mapper.opposites[l])
+            n.goto()
             info("mapper: Zyklus gefunden. Neue Kante gebaut.")
         else
             local newroom = map.addRoom()
-            map.room().connect(newroom, l, M.mapper.opposites[l])
-            newroom.fly()
+            map.room().connect(M.mapper.layer, newroom, l, M.mapper.opposites[l])
+            newroom.goto()
             info("mapper: Neuen Raum gebaut.")
         end
     end
@@ -561,7 +564,7 @@ M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
 end)
 
 function M.mapper.costFunction(r, e)
-    if M.seer ~= true and string.match(e.getName(), "^t ") then
+    if M.seer ~= true and string.match(e.name, "^t ") then
         return -1
     end
 
@@ -572,8 +575,22 @@ function M.mapper.costFunction(r, e)
     end
 end
 
+function M.mapper.toPara(n)
+    if n == 0 then
+        M.mapper.overlay = {'base'}
+        M.mapper.layer = 'base'
+    elseif n == 1 then
+        M.mapper.overlay = {'base', 'p1'}
+        M.mapper.layer = 'p1'
+    elseif n == 2 then
+        M.mapper.overlay = {'base', 'p2'}
+        M.mapper.layer = 'p2'
+    end
+    map.renderOverlay = M.mapper.overlay
+end
+
 function M.mapper.fly(r)
-    map.room(r).fly()
+    map.room(r).goto()
     info("Flug erfolgreich.")
 end
 
@@ -581,14 +598,22 @@ function M.mapper.walk(r)
     if M.mapper.mode == "off" then
         info("mapper: Kann nicht laufen, Mapper ist aus.")
     else
+        target = map.room(r, "tag")
+        if target == nil and tonumber(r) ~= nil then
+            target = map.room(tonumber(r))
+        end
+        if target == nil then
+            error(string.format("Ziel '%s' nicht gefunden .", tostring(r)))
+        end
+
         if M.mapper.mode == "node" then
             M.mapper.mode = "fixed"
             M.mapper.lastroom = map.room()
-            mapper.walk(map.room(r), M.mapper.costFunction)
+            mapper.walk(target, M.mapper.overlay, M.mapper.costFunction)
             M.mapper.mode = "node"
         else
             M.mapper.lastroom = map.room()
-            mapper.walk(map.room(r), M.mapper.costFunction)
+            mapper.walk(target, M.mapper.overlay, M.mapper.costFunction)
         end
     end
 end
@@ -600,7 +625,7 @@ function M.mapper.walkBack()
 end
 
 function M.mapper.printRoomInfo()
-    local edges = map.room().edges
+    local edges = map.room().overlay(M.mapper.overlay)
     local ausg = ""
     if edges == {} then
         ausg = "Keine Ausgaenge."
@@ -616,7 +641,7 @@ end
 
 function M.mapper.printRoomInfoLong()
     info(string.format("Raum #%d, Tag: %s.", map.room().id, (map.room().tag and map.room().tag or "keins")))
-    local edges = map.room().edges
+    local edges = map.room().overlay(M.mapper.overlay)
     local ausg = ""
     if edges == {} then
         ausg = "Keine Ausgaenge."
@@ -755,7 +780,7 @@ function M.horde.follow(name, p)
 end
 
 M.horde.sendTriggers:add(triggers.line_func("autofollow", function (l)
-    for k,v in pairs(map.room().edges) do
+    for k,v in pairs(map.room().overlay(M.mapper.overlay)) do
         if l == k then
             if honda_follow then
                 honda_rpc.send(k)

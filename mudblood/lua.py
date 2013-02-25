@@ -360,6 +360,7 @@ class Lua_Map(LuaExposedObject):
 
     def load(self, filename, mode="r"):
         oldCurrentRoom = self._lua.session.map.currentRoom
+        oldDirections = self._lua.session.map.dirConfig
 
         if mode == "w":
             if self._flock:
@@ -371,10 +372,11 @@ class Lua_Map(LuaExposedObject):
                 self._lua.error("Map file is already locked.")
 
         with open(filename, "r") as f:
-            self._lua.session.map.load(f)
+            self._lua.session.map = map.Map.load(f)
 
         self._filename = filename
         self._lua.session.map.goto(oldCurrentRoom)
+        self._lua.session.map.dirConfig = oldDirections
 
     def lock(self):
         if self._flock is not None:
@@ -384,6 +386,7 @@ class Lua_Map(LuaExposedObject):
                 self._lua.error("Map file is already locked.")
 
     def close(self):
+        self._lua.session.map = map.Map()
         if self._filename is None:
             return
         if self._flock is not None:
@@ -419,6 +422,13 @@ class Lua_Map(LuaExposedObject):
 
     directions = property(getDirections, setDirections)
 
+    def getRenderOverlay(self):
+        return self._lua.lua.table(*self._lua.session.map.renderOverlay)
+    def setRenderOverlay(self, v):
+        self._lua.session.map.renderOverlay = list(v.values())
+
+    renderOverlay = property(getRenderOverlay, setRenderOverlay)
+
     #
     # Management
     #
@@ -439,7 +449,7 @@ class Lua_Map(LuaExposedObject):
             return Lua_Map_Room(self._lua, self._lua.session.map.findRoom(self._lua.session.map.currentRoom))
         else:
             if index is not None:
-                r = self._lua.session.map.findRoom((id, index))
+                r = self._lua.session.map.findRoom((index, id))
             else:
                 r = self._lua.session.map.findRoom(id)
 
@@ -543,19 +553,26 @@ class Lua_Map_Room(LuaExposedObject):
 
     def goto(self):
         self._lua.session.map.goto(self._room.id)
+        self._lua.hook("room")
 
     def shortestPath(self, to, layers, weightFunction=None):
+        p = None
         if weightFunction:
             def wf(r, d, e):
                 return weightFunction(Lua_Map_Room(self._lua, r), Lua_Map_Edge(self._lua, r, d, e))
-            return self._lua.lua.table(*self._lua.session.map.shortestPath(self._room.id,
-                                                                           to._room.id,
-                                                                           weightFunction=wf,
-                                                                           layers=list(layers)))
+            p = self._lua.session.map.shortestPath(self._room.id,
+                                                   to._room.id,
+                                                   list(layers.values()),
+                                                   weightFunction=wf)
         else:
-            return self._lua.lua.table(*self._lua.session.map.shortestPath(self._room.id,
-                                                                           to._room.id,
-                                                                           layers=list(layers)))
+            p = self._lua.session.map.shortestPath(self._room.id,
+                                                   to._room.id,
+                                                   list(layers.values()))
+
+        if p is None:
+            return None
+        else:
+            return self._lua.lua.table(*list(p))
 
 class Lua_Map_Edge(LuaExposedObject):
     def __init__(self, lua, room, direction, edge):

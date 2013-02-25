@@ -2,6 +2,7 @@ import sys
 import os
 import time
 import argparse
+import traceback
 
 screens = ['tbscreen', 'ttyscreen', 'wxscreen', 'pgscreen'];
 
@@ -125,7 +126,7 @@ class Mudblood(object):
             try:
                 ev.call(*ev.args)
             except Exception as e:
-                self.log(str(e), "err")
+                self.log("{}\n{}".format(str(e), traceback.format_exc()), "err")
         else:
             self.session.event(ev)
 

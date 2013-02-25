@@ -166,6 +166,10 @@ class TestMap(unittest.TestCase):
                 sys.stdout.write("\n")
             sys.stdout.write(chr(r[i]))
 
+    def test_shortestPath(self):
+        self.makeSimpleMap()
+        self.assertEquals(self.m.shortestPath(0, 2, ['main', 'main2']), ('n', 'w'))
+
     def test_json(self):
         self.makeSimpleMap()
 
@@ -181,7 +185,7 @@ class TestMap(unittest.TestCase):
         print(o.getvalue())
 
         jsonmap = map.Map.load_old(open("/home/philip/.config/mudblood/mg/map", "r"))
-        jsonmap.save(open("testout", "w"))
+        jsonmap.save(open("newmap", "w"))
 
 suite = unittest.TestSuite([unittest.TestLoader().loadTestsFromTestCase(x) for x in
     [TestMap]

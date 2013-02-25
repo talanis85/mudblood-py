@@ -9,9 +9,13 @@ local walker = nil
 local walk_semaphore = 0
 local walk_stop = false
 
-local function walk_cr(room, weightFunction)
-    local p = map.room().getPath(room, weightFunction)
+local function walk_cr(room, overlay, weightFunction)
+    local p = map.room().shortestPath(room, overlay, weightFunction)
     local cr = coroutine.running()
+
+    if p == nil then
+        error("Path not found")
+    end
 
     walk_stop = false
 
@@ -36,10 +40,10 @@ end
 M.pre_walk = nil
 M.post_walk = nil
 
-function M.walk(room, weightFunction)
+function M.walk(room, overlay, weightFunction)
     walker = coroutine.create(walk_cr)
     walk_semaphore = 0
-    local status, err = coroutine.resume(walker, room, weightFunction)
+    local status, err = coroutine.resume(walker, room, overlay, weightFunction)
     if status ~= true then
         walker = nil
         error(err)

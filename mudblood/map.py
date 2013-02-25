@@ -183,6 +183,12 @@ class Edge(object):
 
         return self.dest
 
+    def getUserdata(self, key):
+        return (key in self.userdata and self.userdata[key] or None)
+
+    def setUserdata(self, key, value):
+        self.userdata[key] = value
+
 class Map(object):
     """
     A map.
@@ -219,6 +225,8 @@ class Map(object):
         self.weightCache = {}
         self._nextRid = 1
         self._settled = True
+
+        self.renderOverlay = ['base']
 
     def save(self, f):
         json.dump(self, f, cls=MapJSONEncoder)
@@ -294,17 +302,18 @@ class Map(object):
 
             for d,e in self.rooms[roomid].getOverlay(layers).items():
                 if e.follow().id not in visited:
+                    weight = 0
                     if weightFunction:
                         if (roomid, d, e) in self.weightCache:
                             weight = self.weightCache[(roomid, d, e)]
                         else:
-                            weight = weightFunction(roomid, d, e)
+                            weight = weightFunction(self.rooms[roomid], d, e)
                             self.weightCache[(roomid, d, e)] = weight
                     else:
                         weight = e.weight
 
                     if weight >= 0:
-                        heapq.heappush(queue, (length + e.weight, e.follow().id, path + (d,)))
+                        heapq.heappush(queue, (length + weight, e.follow().id, path + (d,)))
 
         return None
 
@@ -338,7 +347,7 @@ class MapJSONEncoder(json.JSONEncoder):
             return {'__type__': 'room',
                     'id': ob.id,
                     'edges': ob.getLayers(),
-                    'virtualEdges': ob.getVirtualEdges(),
+                    'virtualEdges': [x.id for x in ob.getVirtualEdges()],
                     'userdata': ob.userdata,
                    }
         elif isinstance(ob, Edge):
@@ -409,6 +418,8 @@ class MapJSONDecoderOld(json.JSONDecoder):
             for virt in d['virtualEdges']:
                 room.virtualEdges.append(virt)
             room.userdata = d['userdata']
+            if d['tag'] is not None:
+                room.userdata['tag'] = d['tag']
             return room
 
         elif 'dest' in d:
@@ -427,7 +438,6 @@ class MapRenderer(object):
     """
     def __init__(self, map):
         self.map = map
-        self.layers = ['base']
 
     def render(self):
         pass
@@ -452,7 +462,7 @@ class AsciiMapRenderer(MapRenderer):
 
         x = 1
         y = 1
-        for e in self.map.rooms[self.map.currentRoom].getOverlay(self.layers):
+        for e in self.map.rooms[self.map.currentRoom].getOverlay(self.map.renderOverlay):
             if y >= h:
                 break
             for c in str(e):
@@ -475,7 +485,7 @@ class AsciiMapRenderer(MapRenderer):
             else:
                 self.out[y*w+x] = ord('#')
 
-        for d,e in r.getOverlay(self.layers).items():
+        for d,e in r.getOverlay(self.map.renderOverlay).items():
             if d in self.map.dirConfig:
                 d2 = self.map.dirConfig[d]
                 newx = x
