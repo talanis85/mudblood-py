@@ -595,6 +595,11 @@ class Lua_Map_Edge(LuaExposedObject):
 
     name = property(getName)
 
+    def getLayer(self):
+        return self._edge.layer
+
+    layer = property(getLayer)
+
     def getSplit(self):
         return self._edge.split
 
