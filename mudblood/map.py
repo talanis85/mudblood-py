@@ -267,8 +267,18 @@ class Map(object):
         """
         if isinstance(id, tuple) and len(id) == 2:
             for r in self.rooms.values():
-                if id[0] in r.userdata and r.userdata[id[0]] == id[1]:
-                    return r
+                if id[0] in r.userdata:
+                    d = r.userdata[id[0]]
+                    if hasattr(d, "values"):
+                        for v in d.values():
+                            if v == id[1]:
+                                return r
+                    elif isinstance(d, list):
+                        for v in d:
+                            if v == id[1]:
+                                return r
+                    elif r.userdata[id[0]] == id[1]:
+                        return r
 
             return None
         elif isinstance(id, int):
