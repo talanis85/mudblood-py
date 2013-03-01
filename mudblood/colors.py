@@ -70,6 +70,9 @@ class AString(object):
     
     def __repr__(self):
         return self.__str__()
+
+    def __len__(self):
+        return len(self.string)
     
     def toString(self):
         return self.__str__()
