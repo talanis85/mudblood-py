@@ -175,6 +175,8 @@ class Lua(object):
             self.session.echo(ob, buf)
         elif isinstance(ob, basestring):
             self.session.echo(ansi.Ansi().parseToAString(ob), buf)
+        elif isinstance(ob, lupa._lupa._LuaTable):
+            self.session.echo("{" + ", ".join(["{}:{}".format(str(k),str(v)) for k,v in ob.items()]) + "}", buf)
         else:
             self.session.echo(colors.AString(str(ob)), buf)
 
