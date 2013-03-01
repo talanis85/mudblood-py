@@ -32,7 +32,7 @@ class Session(event.Source):
         self.lastBlock = ""
         self.promptLine = ""
         self.ansi = ansi.Ansi()
-        self.userStatus = ""
+        self.userStatus = colors.AString("")
         self.encoding = "utf8"
         self.map = map.Map()
         self.rpc = None
@@ -185,10 +185,6 @@ class Session(event.Source):
 
         self.lastBlock = ""
 
-    def getStatusLine(self):
-        #return (self.lua.eval("mapper.walking()") and "WALKING" or "NOT WALKING")
-        return ""
-    
     def echo(self, string, lb='main'):
         if lb not in self.linebuffers:
             self.linebuffers[lb] = linebuffer.Linebuffer()
@@ -258,6 +254,6 @@ class Session(event.Source):
         if string is None:
             pass
         else:
-            self.userStatus = string
-        return self.userStatus
+            self.userStatus = ansi.Ansi().parseToAString(string)
+        return str(self.userStatus)
 
