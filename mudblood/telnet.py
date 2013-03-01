@@ -138,9 +138,8 @@ class Telnet(event.AsyncSource):
                 elif self.telnet_state == 4:
                     if c == SE:
                         if self.telnet_option == 201:
-                            # TODO: Which encoding?
                             self.put(TelnetEvent(self.telnet_command, self.telnet_option, self.telnet_data))
-                            self.put(GMCPEvent(data=self.telnet_data.decode('utf8')))
+                            self.put(GMCPEvent(data=self.telnet_data.decode('utf8', errors='replace')))
                         else:
                             self.put(TelnetEvent(self.telnet_command, self.telnet_option, self.telnet_data))
                         self.telnet_state = 0
