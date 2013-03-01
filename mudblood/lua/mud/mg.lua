@@ -117,11 +117,12 @@ function M.base.onReport()
                     M.stats.vorsicht, M.stats.fluchtrichtung,
                     M.stats.gift, M.stats.gift_max))
     else
-        status(string.format("%s (%s) | %d / %d | %d / %d | v:%d (%s) | g:%d/%d",
+        M.base.status.report = string.format("%s (%s) | %d / %d | %d / %d | v:%d (%s) | g:%d/%d",
                     M.stats.name, M.stats.guild,
                     M.stats.lp, M.stats.lp_max, M.stats.kp, M.stats.kp_max,
                     M.stats.vorsicht, M.stats.fluchtrichtung,
-                    M.stats.gift, M.stats.gift_max))
+                    M.stats.gift, M.stats.gift_max)
+        M.base.status.update()
     end
 end
 --}}}
@@ -139,19 +140,18 @@ function M.base.setup()
 
     M.onReport = M.base.onReport
 
-    -- EOR telneg
+    -- Telnegs
     events.register("telneg", function (cmd, option, data)
         print("Telneg: cmd=" .. tostring(cmd) .. ", option=" .. tostring(option) .. ", data=" .. tostring(data), "telnet")
         if cmd == telnet.WILL and option == telnet.OPT_EOR then
             telnet.negDo(telnet.OPT_EOR)
+        elseif cmd == telnet.WILL and option == 201 then
+            M.gmcp.setup()
         elseif cmd == telnet.EOR then
             tlRecvVolatile:clear()
             markPrompt()
         end
     end)
-
-    -- GMCP
-    M.gmcp.setup()
 
     -- Logging
     M.base.logfd = assert(io.open(path.profile() .. "/log", "a"))
@@ -188,6 +188,25 @@ M.base.sendLogger = triggers.line_func("Logger", function (l)
         M.base.logfd:flush()
     end
 end)
+
+-- Status lines
+M.base.status = {}
+M.base.status.report = ""
+M.base.status.mapper = ""
+
+function M.base.status.update()
+    padding = ""
+    for i=0,(screen.width() - #M.base.status.report - 53) do
+        padding = padding .. " "
+    end
+
+    status(string.format("%s%-10.10s %s#%-5.5d %s%-10.10s %s%-20.20s%s %s",
+                         colors.Red,                        M.mapper.mode,
+                         colors.Green,                      map.room().id,
+                         colors.Red,                        map.room().getUserdata("tag"),
+                         colors.Green,                      map.room().getUserdata("hash"),
+                         colors.Off .. padding,             M.base.status.report))
+end
 
 -- Report
 
@@ -266,6 +285,7 @@ end)
 
 --{{{
 M.gmcp = {}
+M.gmcp.active = false
 
 function M.gmcp.setup()
     events.register("gmcp", function (mod, data)
@@ -302,20 +322,47 @@ function M.gmcp.setup()
             print(colors.Blue .. string.sub(data['msg'], 1, -2) .. colors.Off)
         elseif mod == "MG.room.info" then
             local oldhash = map.room().getUserdata("hash")
+            local uptodate = false
+
+            if oldhash == "nohash" then
+                mapper.V()
+                return
+            end
+
+            if oldhash ~= nil and type(oldhash) ~= "table" then
+                oldhash = {oldhash}
+            end
+
+            if oldhash ~= nil then
+                for _,v in ipairs(oldhash) do
+                    if v == data['id'] then
+                        uptodate = true
+                        break
+                    end
+                end
+            end
+
             if M.mapper.mode == "updatehash" then
-                if oldhash ~= nil and data['id'] ~= oldhash then
-                    info(string.format("Hash-Konflikt! Alter Hash: %s, neuer Hash: %s.", oldhash, data['id']))
-                    M.mapper.mode = "fixed"
+                if oldhash ~= nil and uptodate == false then
+                    info(string.format("Fuege neuen Hash hinzu: %s.", data['id']))
+                    table.insert(oldhash, data['id'])
+                    map.room().setUserdata("hash", oldhash)
                 elseif oldhash == nil then
                     map.room().setUserdata("hash", data['id'])
-                    info(string.format("Hash gesetzt: %s", data['id']))
+                    info(string.format("Hash gesetzt: '%s'", data['id']))
                 end
-                mapper.V()
-            elseif oldhash ~= nil and data['id'] ~= oldhash then
-                info(string.format("Hash-Konflikt! Fliege zu %s.", data['id']))
-                map.room(data['id'], "hash").fly()
-                M.mapper.mode = "fixed"
+            elseif oldhash ~= nil and uptodate == false then
+                local flyto = map.room(data['id'], "hash")
+                if flyto == nil then
+                    M.mapper.currentUnknownHash = data['id']
+                    info(string.format("Hash-Konflikt! Raum %s nicht gefunden.", data['id']))
+                else
+                    flyto.goto()
+                    info(string.format("Hash-Konflikt! Fliege zu %s.", data['id']))
+                end
+                M.mapper.setMode("fixed")
             end
+            mapper.V()
         end
 
         M.onReport()
@@ -325,6 +372,8 @@ function M.gmcp.setup()
     telnet.gmcpObject("Core.Hello", {client="mudblood", version="0.1"})
     telnet.gmcpArray("Core.Supports.Set", {"MG.char 1", "comm.channel 1", "MG.room 1"})
     telnet.gmcpValue("Core.Debug", 1)
+
+    M.gmcp.active = true
 end
 
 --}}}
@@ -512,18 +561,24 @@ function M.mapper.setup()
         map.invalidateWeightCache()
     end) end)
 
-    nmap(M.keyprefix .. "<TAB>mf", function () M.mapper.mode = "fixed"; info("mapper: Modus fixed") end)
-    nmap(M.keyprefix .. "<TAB>ma", function () M.mapper.mode = "auto"; info("mapper: Modus auto") end)
-    nmap(M.keyprefix .. "<TAB>mn", function () M.mapper.mode = "node"; info("mapper: Modus node") end)
-    nmap(M.keyprefix .. "<TAB>mo", function () M.mapper.mode = "off"; info("mapper: Modus off") end)
-    nmap(M.keyprefix .. "<TAB>mm", function () M.mapper.mode = "move"; info("mapper: Modus move") end)
-    nmap(M.keyprefix .. "<TAB>mu", function () M.mapper.mode = "updatehash"; info("mapper: Modus updatehash") end)
+    nmap(M.keyprefix .. "<TAB>mf", function () M.mapper.setMode("fixed") end)
+    nmap(M.keyprefix .. "<TAB>ma", function () M.mapper.setMode("auto") end)
+    nmap(M.keyprefix .. "<TAB>mn", function () M.mapper.setMode("node") end)
+    nmap(M.keyprefix .. "<TAB>mo", function () M.mapper.setMode("off") end)
+    nmap(M.keyprefix .. "<TAB>mm", function () M.mapper.setMode("move") end)
+    nmap(M.keyprefix .. "<TAB>mu", function () M.mapper.setMode("updatehash") end)
 
     if M.mm then
         nmap(M.keyprefix .. "<TAB><TAB>", M.mapper.printRoomInfo)
     else
         nmap(M.keyprefix .. "<TAB><TAB>", function () screen.windowVisible('map', (not screen.windowVisible('map'))) end)
     end
+end
+
+function M.mapper.setMode(m)
+    M.mapper.mode = m
+    info("Mapper modus: " .. m)
+    M.base.status.update()
 end
 
 M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
@@ -540,19 +595,19 @@ M.mapper.walkTrigger = triggers.line_func("mapper", function (l)
         end
     end
 
-    if found and M.mapper.mode == "updatehash" then
+    if found and M.gmcp.active then
         mapper.P()
     end
 
     if found == false and M.mapper.mode == "auto" and M.mapper.opposites[l] ~= nil then
         local n = map.room().findNeighbor(M.mapper.overlay, l)
         if n then
-            map.room().connect(M.mapper.layer, n, l, M.mapper.opposites[l])
+            map.room().connect('base', n, l, M.mapper.opposites[l])
             n.goto()
             info("mapper: Zyklus gefunden. Neue Kante gebaut.")
         else
             local newroom = map.addRoom()
-            map.room().connect(M.mapper.layer, newroom, l, M.mapper.opposites[l])
+            map.room().connect('base', newroom, l, M.mapper.opposites[l])
             newroom.goto()
             info("mapper: Neuen Raum gebaut.")
         end
@@ -609,11 +664,21 @@ function M.mapper.addPara1Room(room)
         end
     end
 
-    newroom.goto()
+    newroom.setUserdata("para", 1)
+
+    return newroom
 end
 
 function M.mapper.fly(r)
-    map.room(r).goto()
+    target = map.room(r, "tag")
+    if target == nil and tonumber(r) ~= nil then
+        target = map.room(tonumber(r))
+    end
+    if target == nil then
+        error(string.format("Ziel '%s' nicht gefunden .", tostring(r)))
+    end
+
+    target.goto()
     info("Flug erfolgreich.")
 end
 
@@ -855,19 +920,20 @@ function M.tanjian.onReport()
     if M.mm then
         info(string.format("LP: %d | KP: %d", M.stats.lp, M.stats.kp))
     else
-        status(string.format("%d / %d | %d / %d | v:%d (%s) | g:%d/%d | %s %s %s %s %s %s %s | %s | %s | %d",
+        M.base.status.report = string.format("%d / %d | %d / %d | v:%d (%s) | g:%d/%d | %s%s%s%s%s%s%s | %s | %s",
                     M.stats.lp, M.stats.lp_max, M.stats.kp, M.stats.kp_max, M.stats.vorsicht, M.stats.fluchtrichtung,
                     M.stats.gift, M.stats.gift_max,
-                    M.stats.blind == 1 and "B" or " ",
-                    M.stats.taub == 1 and "T" or " ",
-                    M.stats.frosch == 1 and "F" or " ",
-                    M.tanjian.stats.hayai == 1 and "HA" or "  ",
-                    M.tanjian.stats.tegatana == 1 and "TE" or (M.tanjian.stats.tegatana == 2 and "OM" or "  "),
+                    M.stats.blind == 1 and "B" or "",
+                    M.stats.taub == 1 and "T" or "",
+                    M.stats.frosch == 1 and "F" or "",
+                    M.tanjian.stats.hayai == 1 and "HA" or "",
+                    M.tanjian.stats.tegatana == 1 and "TE" or (M.tanjian.stats.tegatana == 2 and "OM" or ""),
                     M.tanjian.stats.kokoro == 1 and "KO" or "  ",
-                    M.tanjian.stats.meditation == 1 and "M" or (M.tanjian.stats.meditation == 2 and "m" or " "),
+                    M.tanjian.stats.meditation == 1 and "M" or (M.tanjian.stats.meditation == 2 and "m" or ""),
                     M.tanjian.stats.akshara == 1 and "ja" or (M.tanjian.stats.akshara == 2 and "busy" or "nein"),
-                    M.stats.gesinnung,
-                    M.stats.erfahrung))
+                    M.stats.gesinnung)
+
+        M.base.status.update()
     end
 end
 
