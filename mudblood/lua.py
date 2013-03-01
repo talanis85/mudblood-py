@@ -137,6 +137,25 @@ class Lua(object):
         cr = g.ctxGlobal.timers.query.coroutine(g.ctxGlobal.timers)
         cr.send(None)
 
+    def convertToPython(self, ob):
+        if not hasattr(ob, "items"):
+            return ob
+
+        ret = []
+        for k,v in ob.items():
+            if isinstance(k, int):
+                ret.append(self.convertToPython(v))
+
+        return ret
+
+    def convertFromPython(self, ob):
+        if isinstance(ob, list):
+            return self.lua.table(*[self.convertFromPython(x) for x in ob])
+        elif isinstance(ob, dict):
+            self.error("Dictionaries are not supported in userdata")
+        else:
+            return ob
+
     # Lua functions
 
     def connect(self, host, port):
@@ -499,10 +518,10 @@ class Lua_Map_Room(LuaExposedObject):
         return self._lua.lua.table(**dict(ret))
 
     def getUserdata(self, key):
-        return self._room.getUserdata(key)
+        return self._lua.convertFromPython(self._room.getUserdata(key))
 
     def setUserdata(self, key, value):
-        self._room.setUserdata(key, value)
+        self._room.setUserdata(key, self._lua.convertToPython(value))
 
     #
     # Connect and delete
