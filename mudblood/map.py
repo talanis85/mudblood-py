@@ -475,10 +475,10 @@ class AsciiMapRenderer(MapRenderer):
 
         x = 1
         y = 1
-        for e in self.map.rooms[self.map.currentRoom].getOverlay(self.map.renderOverlay):
+        for l,n,_ in self.map.rooms[self.map.currentRoom].getFlatLayers():
             if y >= h:
                 break
-            for c in str(e):
+            for c in "{} ({})".format(n, l):
                 self.out[y*w+x] = c
                 x += 1
             x = 1
