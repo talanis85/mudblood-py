@@ -12,4 +12,13 @@ M.Magenta = esc .. "[35m"
 M.Cyan = esc .. "[36m"
 M.White = esc .. "[37m"
 
+M.bBlack = esc .. "[40m"
+M.bRed = esc .. "[41m"
+M.bGreen = esc .. "[42m"
+M.bYellow = esc .. "[43m"
+M.bBlue = esc .. "[44m"
+M.bMagenta = esc .. "[45m"
+M.bCyan = esc .. "[46m"
+M.bWhite = esc .. "[47m"
+
 return M
