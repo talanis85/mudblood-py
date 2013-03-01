@@ -138,9 +138,12 @@ class TermboxScreen(modalscreen.ModalScreen):
 
         self.tb.clear()
 
+        # Get Status line
+        status = [l for l in self.master.session.userStatus.splitLines()]
+
         # Draw main linebuffer
 
-        mainarea = self.height - 2
+        mainarea = self.height - 1 - len(status)
 
         x = 0
         y = 0
@@ -232,21 +235,17 @@ class TermboxScreen(modalscreen.ModalScreen):
                 self.tb.change_cell(x, y, ord(c), termbox.DEFAULT, termbox.DEFAULT)
                 x += 1
 
-        # System status
-        x = self.width - 1
-        for c in reversed(self.master.session.getStatusLine()):
-            self.tb.change_cell(x, y, ord(c), termbox.DEFAULT, termbox.DEFAULT)
-            x -= 1
-
-        # Status line
-        x = 0
-        y += 1
-        x += (self.width - len(self.master.session.userStatus)) / 2
-        if x < 0:
+        # Status lines
+        y = self.height - len(status)
+        for statusl in status:
             x = 0
-        for c in self.master.session.userStatus:
-            self.tb.change_cell(x, y, ord(c), termbox.DEFAULT, termbox.DEFAULT)
-            x += 1
+            x += (self.width - len(statusl)) / 2
+            if x < 0:
+                x = 0
+            for c in statusl:
+                self.tb.change_cell(x, y, ord(c[1]), c[0][0] | c[0][2], c[0][1])
+                x += 1
+            y += 1
         
         # WINDOWS
 
@@ -254,14 +253,13 @@ class TermboxScreen(modalscreen.ModalScreen):
         for w in self.windows:
             ratioWhole += self.window_sizes[w]
 
-        windowArea = self.height / 2
+        windowArea = mainarea / 2
 
         x = 0
         y = 0
         for w in self.windows:
             x = 0
 
-            #wh = int(windowArea * (self.window_sizes[w] / ratioWhole))
             wh = self.window_sizes[w]
             if w == 'map':
                 # TODO: Race condition! Map must be rendered in session thread!
