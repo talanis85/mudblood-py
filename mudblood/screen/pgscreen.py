@@ -267,8 +267,10 @@ class PygameScreen(modalscreen.ModalScreen):
 
         border = 10
 
+        status = [x for x in self.master.session.userStatus.splitLines()]
+
         gw = self.width / self.fontwidth
-        gh = self.height / self.fontheight - 3
+        gh = self.height / self.fontheight - 2 - len(status)
 
         gww = gw / self.columns
         ww = self.width / self.columns
@@ -328,11 +330,11 @@ class PygameScreen(modalscreen.ModalScreen):
                                          y - self.fontheight / 2, self.colormap_fg[colors.WHITE])
 
         pygame.gfxdraw.hline(self.screen, 0, self.width,
-                             self.height - self.fontheight * 2 - border*2, self.colormap_fg[colors.WHITE])
+                             self.height - self.fontheight * (1 + len(status)) - border*2, self.colormap_fg[colors.WHITE])
 
         if self.modeManager.getMode() == "prompt":
             x = border
-            y = self.height - self.fontheight * 2 - border
+            y = self.height - self.fontheight * (1 + len(status)) - border
 
             curline = self.font.render(self.promptMode.getText() + self.promptMode.getBuffer(), self.antialias, self.colormap_fg[colors.RED], background)
             self.screen.blit(curline, (x, y))
@@ -340,7 +342,16 @@ class PygameScreen(modalscreen.ModalScreen):
             cursor = self.font.render("_", self.antialias, self.colormap_fg[colors.RED])
             self.screen.blit(cursor, (x + (self.promptMode.getCursor() + len(self.promptMode.getText()))*self.fontwidth, y))
 
-        status = self.font.render(self.master.session.userStatus, self.antialias, self.colormap_fg[colors.DEFAULT], background)
-        self.screen.blit(status, ((self.width - status.get_width()) / 2, self.height - self.fontheight - border))
+        # Draw status lines
+        y = self.height - len(status) * self.fontheight - border
+        for l in status:
+            x = max([((gw - len(l)) / 2) * self.fontwidth, 0])
+            for ch in l:
+                char = self.font.render(ch[1], self.antialias,
+                                        self.colormap_fg[ch[0][0]],
+                                        (ch[0][1] == colors.DEFAULT and background or self.colormap_bg[ch[0][1]]))
+                self.screen.blit(char, (x, y))
+                x += self.fontwidth
+            y += self.fontheight
         pygame.display.flip()
 
