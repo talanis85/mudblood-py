@@ -219,9 +219,8 @@ class Lua(object):
             except:
                 self.error("Encoding {} not supported".format(value))
 
-    def editor(self, content):
-        self.error("Editor not supported for now.")
-        #return MB().screen.editor(content)
+    def editor(self, content, callback):
+        self.session.put(event.ModeEvent("editor", content=content, callback=callback))
 
     def markPrompt(self):
         self.session.markPrompt()

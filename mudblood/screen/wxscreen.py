@@ -94,7 +94,10 @@ class WxScreen(modalscreen.ModalScreen):
         self.win.Close(True)
 
     def doMode(self, ev):
-        self.modeManager.setMode(ev.mode, **ev.args)
+        try:
+            self.modeManager.setMode(ev.mode, **ev.args)
+        except modes.UnsupportedModeException:
+            self.put(event.LogEvent("Unsupported mode: {}".format(ev.mode), "err"))
 
     def doKey(self, ev):
         key = ev.GetKeyCode()

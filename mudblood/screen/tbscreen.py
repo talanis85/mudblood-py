@@ -124,7 +124,10 @@ class TermboxScreen(modalscreen.ModalScreen):
                 self.doneEvent()
                 break
             elif isinstance(ev, screen.ModeScreenEvent):
-                self.modeManager.setMode(ev.mode, **ev.args)
+                try:
+                    self.modeManager.setMode(ev.mode, **ev.args)
+                except modes.UnsupportedModeException:
+                    self.put(event.LogEvent("Unsupported mode: {}".format(ev.mode), "err"))
             elif isinstance(ev, screen.KeyScreenEvent):
                 self.modeManager.key(ev.key)
 

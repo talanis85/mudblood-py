@@ -1,11 +1,17 @@
 from mudblood import keys
 
+class UnsupportedModeException(Exception):
+    pass
+
 class ModeManager(object):
     def __init__(self, initMode, modes):
         self._modes = modes
         self._currentMode = initMode
 
     def setMode(self, modename, **kwargs):
+        if modename not in self._modes:
+            raise UnsupportedModeException()
+
         self._modes[self._currentMode].onExit()
         self._currentMode = modename
         self._modes[self._currentMode].onEnter(**kwargs)
@@ -18,6 +24,9 @@ class ModeManager(object):
 
     def getModeObject(self):
         return self._modes[self._currentMode]
+
+    def addMode(self, modename, ob):
+        self._modes[modename] = ob
 
 class Mode(object):
     def __init__(self, screen):

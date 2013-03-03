@@ -1,4 +1,7 @@
 import threading
+import subprocess
+import tempfile
+import os
 
 import pygame
 import pygame.locals
@@ -134,6 +137,8 @@ class PygameScreen(modalscreen.ModalScreen):
                 colors.DEFAULT:         (0, 0, 0),
         }
 
+        self.modeManager.addMode("editor", EditorMode(self))
+
     def tick(self):
         pass
 
@@ -186,7 +191,10 @@ class PygameScreen(modalscreen.ModalScreen):
                 break
             elif ev.type == pygame.USEREVENT:
                 if ev.code == "mode":
-                    self.modeManager.setMode(ev.mode, **ev.args)
+                    try:
+                        self.modeManager.setMode(ev.mode, **ev.args)
+                    except modes.UnsupportedModeException:
+                        self.put(event.LogEvent("Unsupported mode: {}".format(ev.mode), "err"))
             elif ev.type == pygame.KEYDOWN:
                 if ev.key in keymap:
                     k = keymap[ev.key]
@@ -354,4 +362,22 @@ class PygameScreen(modalscreen.ModalScreen):
                 x += self.fontwidth
             y += self.fontheight
         pygame.display.flip()
+
+class EditorMode(modes.Mode):
+    def __init__(self, screen):
+        self.screen = screen
+
+    def onEnter(self, content, callback):
+        tname = None
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(content)
+            tname = tf.name
+
+        subprocess.call(["/usr/bin/gvim", "--nofork", tname])
+
+        with open(tname, "r") as tf:
+            self.screen.put(event.ModeEvent("normal"))
+            self.screen.put(event.CallableEvent(callback, tf.read()))
+
+        os.unlink(tname)
 
