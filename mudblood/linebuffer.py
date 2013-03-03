@@ -20,7 +20,7 @@ class Linebuffer(object):
                 cur += 1
             else:
                 tempret = []
-                while str(curstr) != "" and i < length:
+                while unicode(curstr) != "" and i < length:
                     tempret.append(curstr[0:width])
                     curstr = curstr[width:]
                     i += 1

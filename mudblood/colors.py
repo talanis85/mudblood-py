@@ -60,10 +60,10 @@ class AString(object):
         return self
 
     def __eq__(self, other):
-        return str(self) == str(other)
+        return unicode(self) == unicode(other)
 
     def __lt__(self, other):
-        return str(self).__lt__(str(other))
+        return unicode(self).__lt__(unicode(other))
 
     def __str__(self):
         return "".join([x[1] for x in self.string])
