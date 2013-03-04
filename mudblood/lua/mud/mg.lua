@@ -830,21 +830,6 @@ M.team.recvTriggers:add(triggers.gsub("%w+ startet den Angriff", function ()
     for k,v in pairs(M.team.team) do
         M.team.team[k] = false
     end
-    if M.team.tab then
-        local e = map.room().edges[M.team.tab]
-        if e then
-            e.to.fly()
-        end
-    end
-end))
-
-M.team.recvTriggers:add(triggers.gsub("Die Angst ist staerker als Du", function ()
-    if M.team.fr then
-        local e = map.room().edges[M.team.fr]
-        if e then
-            e.to.fly()
-        end
-    end
 end))
 --}}}
 
