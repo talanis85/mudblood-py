@@ -33,3 +33,6 @@ class Linebuffer(object):
 
     def echo(self, astring):
         self.lines.extend(AString(astring).splitLines())
+
+    def head(self):
+        return self.lines[-1]
