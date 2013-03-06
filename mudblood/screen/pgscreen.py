@@ -91,6 +91,12 @@ class Lua_Screen(lua.LuaExposedObject):
     def scroll(self, value, name='main'):
         self._screen.moveScroll(name, value)
 
+    def width(self):
+        return self._screen.width / self._screen.fontwidth
+
+    def height(self):
+        return self._screen.height / self._screen.fontheight
+
 class WindowManager(object):
     def __init__(self, screen):
         self.screen = screen
