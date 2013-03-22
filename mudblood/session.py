@@ -121,7 +121,7 @@ class Session(event.Source):
                     self.local_echo = True
                 elif ev.cmd == telnet.WONT:
                     self.local_echo = False
-            elif ev.option == telnet.OPT_NAWS and ev.cmd == telnet.DO:
+            elif ev.option == telnet.OPT_NAWS and ev.cmd == telnet.DO and self.telnet is not None:
                 self.telnet.sendIAC(telnet.WILL, telnet.OPT_NAWS)
                 self.telnet.sendNaws(self.width, self.height)
 
@@ -134,7 +134,8 @@ class Session(event.Source):
             self.width = ev.w
             self.height = ev.h
 
-            self.telnet.sendNaws(ev.w, ev.h)
+            if self.telnet is not None:
+                self.telnet.sendNaws(ev.w, ev.h)
 
         elif isinstance(ev, rpc.RPCEvent):
             try:
