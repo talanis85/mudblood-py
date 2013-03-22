@@ -13,6 +13,7 @@ from mudblood import lua
 import traceback
 import subprocess
 import tempfile
+import os
 
 termbox.DEFAULT = 0x09
 
@@ -85,6 +86,8 @@ class Lua_Screen(lua.LuaExposedObject):
 class TermboxScreen(modalscreen.ModalScreen):
     def __init__(self, master):
         super(TermboxScreen, self).__init__(master)
+
+        self.modeManager.addMode("editor", EditorMode(self))
 
         # Initialize Termbox
         self.tb = termbox.Termbox()
@@ -376,3 +379,30 @@ class TermboxScreen(modalscreen.ModalScreen):
             ret = tmp.read().decode('utf8')
         return ret
 
+class EditorMode(modes.Mode):
+    def __init__(self, screen):
+        self.screen = screen
+
+    def onEnter(self, content, callback):
+        tname = None
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(content)
+            tname = tf.name
+
+        self.screen.source.stop()
+        self.screen.tb.close()
+
+        subprocess.call(["/usr/bin/gvim", "--nofork", tname])
+
+        self.screen.tb = termbox.Termbox()
+        self.screen.source = TermboxSource(self.screen.tb)
+        self.screen.source.start()
+        self.screen.source.bind(self.screen.master.drain)
+        self.screen.tb.set_clear_attributes(termbox.DEFAULT, termbox.DEFAULT)
+        self.screen.tb.set_cursor(-1, -1)
+
+        with open(tname, "r") as tf:
+            self.screen.put(event.ModeEvent("normal"))
+            self.screen.put(event.CallableEvent(callback, tf.read()))
+
+        os.unlink(tname)
