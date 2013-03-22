@@ -573,6 +573,14 @@ function M.mapper.setup()
     else
         nmap(M.keyprefix .. "<TAB><TAB>", function () screen.windowVisible('map', (not screen.windowVisible('map'))) end)
     end
+
+    nmap(M.keyprefix .. "<TAB>n", function ()
+        if map.room().getUserdata("notes") == nil then
+            editor("", function (d) map.room().setUserdata("notes", d) end)
+        else
+            editor(map.room().getUserdata("notes"), function (d) map.room().setUserdata("notes", d) end)
+        end
+    end)
 end
 
 function M.mapper.setMode(m)
