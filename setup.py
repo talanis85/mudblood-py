@@ -51,7 +51,7 @@ if "py2exe" in sys.argv:
     
     for s in screens_available:
         if s not in screens:
-	    excludes.append('mudblood.screen.' + s)
+            excludes.append('mudblood.screen.' + s)
     for s in screens:
         includes.append('mudblood.screen.' + s)
 
