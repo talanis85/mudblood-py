@@ -1034,31 +1034,35 @@ M.klerus = {}
 M.klerus.spells = {}
 
 function M.klerus.setup()
-    nmap("<F1>", M.klerus.spells.heiligenschein)
-    nmap("<F2>", M.klerus.spells.weihe)
-    nmap("<F3>", M.klerus.spells.frieden)
-    nmap("<F4>", M.klerus.spells.lebenskraft)
+    nmap("<LT>ur", function () M.klerus.spells.elementarschild("erde") end)
+    nmap("<LT>uf", function () M.klerus.spells.elementarschild("feuer") end)
+    nmap("<LT>ue", function () M.klerus.spells.elementarschild("eis") end)
+    nmap("<LT>uw", function () M.klerus.spells.elementarschild("wasser") end)
+    nmap("<LT>ul", function () M.klerus.spells.elementarschild("luft") end)
+    nmap("<LT>us", function () M.klerus.spells.elementarschild("saeure") end)
 
-    nmap("<F5><F1>", function () M.klerus.spells.elementarschild("erde") end)
-    nmap("<F5><F2>", function () M.klerus.spells.elementarschild("feuer") end)
-    nmap("<F5><F3>", function () M.klerus.spells.elementarschild("eis") end)
-    nmap("<F5><F4>", function () M.klerus.spells.elementarschild("wasser") end)
-    nmap("<F5><F5>", function () M.klerus.spells.elementarschild("luft") end)
-    nmap("<F5><F6>", function () M.klerus.spells.elementarschild("saeure") end)
+    nmap("<LT>ir", function () M.klerus.spells.elementarsphaere("erde") end)
+    nmap("<LT>if", function () M.klerus.spells.elementarsphaere("feuer") end)
+    nmap("<LT>ie", function () M.klerus.spells.elementarsphaere("eis") end)
+    nmap("<LT>iw", function () M.klerus.spells.elementarsphaere("wasser") end)
+    nmap("<LT>il", function () M.klerus.spells.elementarsphaere("luft") end)
+    nmap("<LT>is", function () M.klerus.spells.elementarsphaere("saeure") end)
 
-    nmap("<F6><F1>", function () M.klerus.spells.elementarsphaere("erde") end)
-    nmap("<F6><F2>", function () M.klerus.spells.elementarsphaere("feuer") end)
-    nmap("<F6><F3>", function () M.klerus.spells.elementarsphaere("eis") end)
-    nmap("<F6><F4>", function () M.klerus.spells.elementarsphaere("wasser") end)
-    nmap("<F6><F5>", function () M.klerus.spells.elementarsphaere("luft") end)
-    nmap("<F6><F6>", function () M.klerus.spells.elementarsphaere("saeure") end)
+    nmap("<LT>o", M.klerus.spells.frieden)
+    nmap("<LT>p", M.klerus.spells.spaltung)
+    
+    nmap("<LT>y", M.klerus.spells.heiligenschein)
+    nmap("<LT>h", M.klerus.spells.weihe)
 
-    nmap("<F7>", M.klerus.spells.goettermacht)
+    nmap("<LT>j", M.klerus.spells.blitz)
+    nmap("<LT>k", M.klerus.spells.erloese)
+    nmap("<LT>l", M.klerus.spells.laeutere)
+    nmap("<LT>;", M.klerus.spells.goetterzorn)
+    nmap("<LT>b", M.klerus.spells.donner)
 
-    nmap("<F9>", M.klerus.spells.blitz)
-    nmap("<F10>", M.klerus.spells.goetterzorn)
-    nmap("<F11>", M.klerus.spells.erloese)
-    nmap("<F12>", M.klerus.spells.donner)
+    nmap("<LT>n", function () M.klerus.spells.heile("team") end)
+    nmap("<LT>m", function () M.klerus.spells.segne("team") end)
+    nmap("<LT>,", M.klerus.spells.goettermacht)
 end
 
 -- Spells
@@ -1081,6 +1085,10 @@ end
 
 function M.klerus.spells.erloese()
     M.base.spell("erloese %f", 2, true)
+end
+
+function M.klerus.spells.laeutere()
+    M.base.spell("laeutere %f")
 end
 
 function M.klerus.spells.elementarsphaere(element)
@@ -1106,6 +1114,18 @@ end
 function M.klerus.spells.goetterzorn()
     M.base.spell("goetterzorn %f")
 end
+
+function M.klerus.spells.heile(wen)
+    M.base.spell("heile " .. wen)
+end
+
+function M.klerus.spells.segne(wen)
+    M.base.spell("segne " .. wen, 2, tru)
+end
+
+function M.klerus.spells.spaltung()
+    M.base.spell("spaltung")
+end
 --}}}
 
 ------------------------------------------------------------------------------
@@ -1117,13 +1137,43 @@ M.kaempfer = {}
 M.kaempfer.spells = {}
 
 function M.kaempfer.setup()
+    nmap("<LT>", M.kaempfer.combo)
     nmap("<F1>", M.kaempfer.spells.fokus)
-
     nmap("<F5>", M.kaempfer.spells.schildparade)
 
-    nmap("<F9>", M.kaempfer.spells.kampftritt)
-    nmap("<F10>", M.kaempfer.spells.schildstoss)
+    nmap("<F12>", function ()
+        prompt("waffenwurf:", function (w)
+            M.kaempfer.waffenwurf_waffe = w
+        end)
+    end)
+
+    tlSend:add(M.kaempfer.triggerZueck)
 end
+
+function M.kaempfer.combo()
+    prompt("COMBO: ", function (p)
+        for i=1,#p do
+            local c = p:sub(i,i)
+            if c == "j" then
+                M.kaempfer.spells.finte()
+            elseif c == "k" then
+                M.kaempfer.spells.schildstoss()
+            elseif c == "l" then
+                M.kaempfer.spells.kampftritt()
+            elseif c == "u" then
+                M.kaempfer.spells.waffenwurf()
+            else
+                info("Unbekannte Technik: " .. c)
+            end
+        end
+    end)
+end
+
+M.kaempfer.waffenwurf_waffe = nil
+
+M.kaempfer.triggerZueck = triggers.gsub("zueck (%w+)", function (w)
+    M.kaempfer.waffe = w
+end)
 
 -- Spells
 
@@ -1141,6 +1191,20 @@ end
 
 function M.kaempfer.spells.fokus()
     M.base.spell("fokus %f")
+end
+
+function M.kaempfer.spells.finte()
+    M.base.spell("finte")
+end
+
+function M.kaempfer.spells.waffenwurf()
+    if M.kaempfer.waffenwurf_waffe ~= nil then
+        directSend("zueck " .. M.kaempfer.waffenwurf_waffe)
+        M.base.spell("waffenwurf %f")
+        directSend("zueck " .. M.kaempfer.waffe)
+    else
+        M.base.spell("waffenwurf %f")
+    end
 end
 --}}}
 
