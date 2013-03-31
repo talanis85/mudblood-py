@@ -68,12 +68,15 @@ if "py2exe" in sys.argv:
         **configuration
     )
 else:
-    screens = ['ttyscreen', 'tbscreen', 'wxscreen', 'pgscreen']
+    #screens = ['ttyscreen', 'tbscreen', 'wxscreen', 'pgscreen']
+    screens = ['tbscreen']
 
     print("Using Distribute...")
 
     setup(
         install_requires = deps(screens),
+        setup_requires = "cython",
+        dependency_links = ['https://github.com/talanis85/termbox/archive/master.zip#egg=termbox-1.0'],
         packages = ['mudblood', 'mudblood.screen'],
         include_package_data = True,
         entry_points = {'console_scripts': ['mudblood = mudblood.main:main']},
