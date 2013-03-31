@@ -83,6 +83,7 @@ class Bindings(object):
             "E": ord("\\"),
             "ESC": ord("\x1b"),
             "TAB": ord("\t"),
+            "LT": ord("<"),
 
             "F1": KEY_F1,
             "F2": KEY_F2,
