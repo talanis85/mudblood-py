@@ -321,6 +321,10 @@ function M.gmcp.setup()
 
             print(colors.Blue .. string.sub(data['msg'], 1, -2) .. colors.Off)
         elseif mod == "MG.room.info" then
+            if M.mapper.mode == "off" then
+                return
+            end
+
             local oldhash = map.room().getUserdata("hash")
             local uptodate = false
 
